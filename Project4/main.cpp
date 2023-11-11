@@ -1,6 +1,17 @@
 ﻿#include <SFML/Graphics.hpp>
 #include <iostream>
 
+/*
+GAME STATES:
+0 - Idle(Menu is opened)
+1 - Play selected, run the game
+2 - Settings is selected, open settings
+3 - About is selected, open About page
+*/
+unsigned short int gameState = 0;
+
+
+
 class Menu {
 private:
 	int selectedOption;
@@ -69,12 +80,21 @@ class GameObject {
 public:
 	virtual void draw(sf::RenderWindow& window) = 0;
 };
-
+class Player :public GameObject {
+public:
+	void draw(sf::RenderWindow& window) override {
+		sf::CircleShape playerIcon(100.f);
+		playerIcon.setFillColor(sf::Color::White);
+		playerIcon.setPosition(sf::Vector2f(window.getSize().x/2, window.getSize().y/2));
+		window.draw(playerIcon);
+	}
+};
 
 
 int main()
 {
 	sf::RenderWindow window(sf::VideoMode(1280, 768), "PG Invaders");
+	Player player;
 	window.setFramerateLimit(60);
 	Menu menu(window.getSize().x, window.getSize().y);
 	while (window.isOpen())
@@ -85,7 +105,7 @@ int main()
 			if (event.type == sf::Event::Closed)
 				window.close();
 
-			if (event.type ==sf::Event::KeyPressed)
+			if (event.type == sf::Event::KeyPressed && gameState == 0)
 			{
 				if (event.key.code == sf::Keyboard::Up) {
 					menu.moveUp();
@@ -96,12 +116,16 @@ int main()
 				else if (event.key.code == sf::Keyboard::Return) {
 					
 					if (menu.getSelectedOption() == 0) {
-						std::cout << "Play selected!\n";					}
+						std::cout << "Play selected!\n";
+						gameState = 1;
+					}
 					else if (menu.getSelectedOption() == 1) {
 						std::cout << "Settings selected!\n";
+						gameState = 2;
 					}
 					else if (menu.getSelectedOption() == 2) {
 						std::cout << "About selected!\n";
+						gameState = 3;
 					}
 					else if (menu.getSelectedOption() == 3) {
 						std::cout << "Exit selected!\n";
@@ -109,9 +133,23 @@ int main()
 					}
 				}
 			}
+			else if (event.type == sf::Event::KeyPressed && gameState != 0) {
+				if (event.key.code == sf::Keyboard::Backspace)
+				{
+					std::cout << "Returned to menu!\n";
+					gameState = 0;
+				}
+			}
 		}
 		window.clear();
-		menu.draw(window);
+		if (gameState == 0)
+		{
+			menu.draw(window);
+		}
+		else if (gameState == 1) {
+			player.draw(window);
+		}
+			
 		window.display();
 	}
 	return 0;
