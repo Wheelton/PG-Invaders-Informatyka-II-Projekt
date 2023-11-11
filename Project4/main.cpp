@@ -16,7 +16,7 @@ public:
 		float modifier = 0.8;
 
 		menu[0].setFont(font);
-		menu[0].setFillColor(sf::Color::White);
+		menu[0].setFillColor(sf::Color::Green);
 		menu[0].setString("Play");
 		menu[0].setPosition(sf::Vector2f(width / 2 - 50, height / 4 * modifier+spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
@@ -46,17 +46,17 @@ public:
 	void moveUp() {
 		if (selectedOption - 1 >=0)
 		{
-			menu[selectedOption].setFillColor(sf::Color::Green);
-			selectedOption--;
 			menu[selectedOption].setFillColor(sf::Color::White);
+			selectedOption--;
+			menu[selectedOption].setFillColor(sf::Color::Green);
 		}
 	}
 	void moveDown() {
 		if (selectedOption + 1 < MENU_ITEMS_COUNT)
 		{
-			menu[selectedOption].setFillColor(sf::Color::Green);
-			selectedOption++;
 			menu[selectedOption].setFillColor(sf::Color::White);
+			selectedOption++;
+			menu[selectedOption].setFillColor(sf::Color::Green);
 		}
 	}
 	int getSelectedOption() const {
