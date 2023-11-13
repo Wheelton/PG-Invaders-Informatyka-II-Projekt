@@ -29,8 +29,9 @@ void runGame(HUD& hud, sf::RenderWindow& window, RightContent& rightContent, Tim
 	player.draw(window);
 }
 
-void restartGame() {
-
+void restartGame(HUD& hud, bool& timerStarted, sf::RenderWindow& window, RightContent& rightContent, Timer& timer, Player& player) {
+	timerStarted = false;
+	runGame(hud, window, rightContent, timer, player, timerStarted);
 }
 
 
@@ -92,6 +93,11 @@ int main()
 				{
 					std::cout << "Powrót do meni!\n";
 					gameState = 0;
+				}
+				if (gameState==1 && event.key.code == sf::Keyboard::R)
+				{
+					std::cout << "Restart!\n";
+					restartGame(hud, timerStarted, window, rightContent, timer, player);
 				}
 			}
 		}
