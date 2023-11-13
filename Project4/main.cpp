@@ -2,7 +2,7 @@
 #include <iostream>
 #include "Menu.h"
 #include "GameObjects.h"
-
+#include "HUD.h"
 /*
 GAME STATES:
 0 - Menu otwarte
@@ -12,6 +12,28 @@ GAME STATES:
 */
 unsigned short int gameState = 0;
 
+void showMainMenu(bool& timerStarted, Menu& menu, sf::RenderWindow& window) {
+	timerStarted = false;
+	menu.draw(window);
+}
+
+void runGame(HUD& hud, sf::RenderWindow& window, RightContent& rightContent, Timer& timer, Player& player, bool& timerStarted) {
+	if (!timerStarted)
+	{
+		timer.resetTimer();
+		timerStarted = true;
+	}
+	timer.update();
+	rightContent.updateTimer();
+	hud.draw(window);
+	player.draw(window);
+}
+
+void restartGame() {
+
+}
+
+
 int main()
 {
 	//Włącz polsie znaki w CMD
@@ -19,6 +41,13 @@ int main()
 	system("cls");
 
 	sf::RenderWindow window(sf::VideoMode(1280, 768), "PG Invaders");
+	int scores;
+	bool timerStarted = false;
+	Borders border(5.f, sf::Color::White);
+	LeftContent leftContent(border, window);
+	Timer timer(0);
+	RightContent rightContent(border, window, timer);
+	HUD hud(border, leftContent, rightContent);
 	Player player;
 	window.setFramerateLimit(60);
 	Menu menu(window.getSize().x, window.getSize().y);
@@ -69,10 +98,10 @@ int main()
 		window.clear();
 		if (gameState == 0)
 		{
-			menu.draw(window);
+			showMainMenu(timerStarted, menu, window);
 		}
 		else if (gameState == 1) {
-			player.draw(window);
+			runGame(hud, window, rightContent, timer, player, timerStarted);
 		}
 		else {
 			menu.drawSubMenu(window, gameState);
