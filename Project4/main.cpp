@@ -49,7 +49,7 @@ int main()
 	Timer timer(0);
 	RightContent rightContent(border, window, timer);
 	HUD hud(border, leftContent, rightContent);
-	Player player;
+	Player player(25.f,0.25, window, border);
 	window.setFramerateLimit(60);
 	Menu menu(window.getSize().x, window.getSize().y);
 	while (window.isOpen())
@@ -98,6 +98,16 @@ int main()
 				{
 					std::cout << "Restart!\n";
 					restartGame(hud, timerStarted, window, rightContent, timer, player);
+				}
+				if (gameState == 1 && event.key.code == sf::Keyboard::Left)
+				{
+					std::cout << "Idź w lewo!\n";
+					player.moveLeft(50);
+				}
+				if (gameState == 1 && event.key.code == sf::Keyboard::Right)
+				{
+					std::cout << "Idź w prawo!\n";
+					player.moveRight(50);
 				}
 			}
 		}

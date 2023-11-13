@@ -62,7 +62,7 @@ public:
 		if (!font.loadFromFile("fonts/Arimo-Regular.ttf")) {
 			std::cerr << "Error loading font";
 		}
-		float width = window.getSize().x - (window.getSize().x * 0.75) - border.getBorderThickness();
+		float width = window.getSize().x*0.25 - border.getBorderThickness();
 		float height = window.getSize().y;
 		
 		float spaceBetweenLines = 0.2;
