@@ -11,7 +11,7 @@ GAME STATES:
 3 - Pcja O grze wybrana, pokaż stronę o grze
 */
 unsigned short int gameState = 0;
-unsigned short static const int MAX_PROJECTILES = 50;
+const static short int FIRE_COOLDOWN = 2;
 
 void showMainMenu(bool& timerStarted, Menu& menu, sf::RenderWindow& window) {
 	timerStarted = false;
@@ -33,6 +33,9 @@ void runGame(
 	sf::Time elapsed = frameClock.restart();
 	float dt = elapsed.asSeconds();
 	player.update(dt);
+	for (auto& bullet : player.bullets) {
+		bullet.draw(window);
+	}
 	player.draw(window);
 }
 
@@ -54,15 +57,18 @@ int main()
 	system("cls");
 
 	sf::RenderWindow window(sf::VideoMode(1280, 768), "PG Invaders");
+
 	int scores;
 	bool timerStarted = false;
-
+	float fireCooldownMultiplier = 1.0;
 
 
 	Borders border(5.f, sf::Color::White);
 	LeftContent leftContent(border, window);
 	Timer timer(0);
 	sf::Clock frameClock;
+	sf::Clock fireCooldown;
+
 	RightContent rightContent(border, window, timer);
 	HUD hud(border, leftContent, rightContent);
 	Player player(25.f,1, window, border);
@@ -127,8 +133,10 @@ int main()
 							std::cout << "Idź w prawo!\n";
 							player.moveRight();
 						}
-						else if (event.key.code == sf::Keyboard::Space) {
+						else if (event.key.code == sf::Keyboard::Space && fireCooldown.getElapsedTime().asSeconds() > FIRE_COOLDOWN * fireCooldownMultiplier) {
+							fireCooldown.restart();
 							std::cout << "Strzelaj!\n";
+							player.fire();
 						}
 					}
 

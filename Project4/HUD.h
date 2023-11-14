@@ -166,7 +166,6 @@ public:
 		}
 	}
 	void updateTimer() {
-		// Update the text to display the current timer seconds
 		text[0].setString("Czas: " + std::to_string(timer.getCurrentSeconds()) + "s");
 	}
 	void updateScores(int scores) {
