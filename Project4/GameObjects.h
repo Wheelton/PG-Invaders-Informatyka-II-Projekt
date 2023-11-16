@@ -116,5 +116,7 @@ public:
         int bulletSize = 16;
         bullets.push_back(Bullet(sf::Vector2f((currentPosition.x + size / 2)+ bulletSize/2, currentPosition.y), bulletSize, bulletSpeed));
     }
-
+    void resetBullets() {
+        bullets.clear();
+    }
 };

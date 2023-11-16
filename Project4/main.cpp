@@ -24,6 +24,7 @@ void runGame(
 ) {
 	if (!timerStarted)
 	{
+		player.resetBullets();
 		timer.resetTimer();
 		timerStarted = true;
 	}
@@ -46,6 +47,7 @@ void restartGame(
 	timerStarted = false;
 	player.stopMoving();
 	player.resetPosition(window);
+	player.resetBullets();
 	runGame(hud, window, rightContent, timer, player, timerStarted, frameClock);
 }
 
