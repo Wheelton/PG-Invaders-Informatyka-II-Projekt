@@ -4,7 +4,7 @@
 class Menu {
 private:
 	int selectedOption;
-	
+	int gameDifficulty;
 	static const int MENU_ITEMS_COUNT = 4;
 	static const int SETTINGS_MENU_ITEMS_COUNT = 1;
 	static const int ABOUT_MENU_ITEMS_COUNT = 1;
@@ -18,7 +18,7 @@ private:
 	*/
 	sf::Text menu[MENU_ITEMS_COUNT + SETTINGS_MENU_ITEMS_COUNT + ABOUT_MENU_ITEMS_COUNT];
 public:
-	Menu(float width, float height) : selectedOption(0) {
+	Menu(float width, float height, int gameDifficulty) : selectedOption(0), gameDifficulty(gameDifficulty) {
 		if (!font.loadFromFile("fonts/Arimo-Regular.ttf")) {
 			std::cerr << "Error loading font";
 		}
@@ -47,8 +47,10 @@ public:
 		//Elementy meni ustawien
 		modifier = 0.8;
 		menu[4].setFont(font);
-		menu[4].setFillColor(sf::Color::White);
-		menu[4].setString(L"Tu będą ustawienia");
+		menu[4].setFillColor(sf::Color::Green);
+		sf::String text = sf::String(L"Ustawienia:\n\nTrudność gry: ");
+		text.replace(": ", ": " + std::to_string(gameDifficulty));
+		menu[4].setString(text);
 		menu[4].setPosition(sf::Vector2f(width / 2 - 50, height / 4 * modifier + spaceBetweenLines));
 		//Elementy meni z informacją o grze
 		modifier = 0.8;
@@ -96,6 +98,26 @@ public:
 			menu[selectedOption].setFillColor(sf::Color::White);
 			selectedOption++;
 			menu[selectedOption].setFillColor(sf::Color::Green);
+		}
+	}
+	void lowerDifficulty(int& difficulty) {
+		if (difficulty>0)
+		{
+			difficulty--;
+			gameDifficulty = difficulty;
+			sf::String text = sf::String(L"Ustawienia:\n\nTrudność gry: ");
+			text.replace(": ", ": " + std::to_string(gameDifficulty));
+			menu[4].setString(text);
+		}
+	}
+	void higherDifficulty(int& difficulty) {
+		if (difficulty<3)
+		{
+			difficulty++;
+			gameDifficulty = difficulty;
+			sf::String text = sf::String(L"Ustawienia:\n\nTrudność gry: ");
+			text.replace(": ", ": " + std::to_string(gameDifficulty));
+			menu[4].setString(text);
 		}
 	}
 	int getSelectedOption() const {

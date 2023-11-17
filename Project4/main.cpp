@@ -65,12 +65,12 @@ int main()
 	system("cls");
 
 	sf::RenderWindow window(sf::VideoMode(1280, 768), "PG Invaders");
-	int gameDifficulty[] = {0,1,2,3};
+	int gameDifficulty = 2;
 	int scores;
 	bool timerStarted = false;
 	float fireCooldownMultiplier = 1.0;
-	int enemyAmount[] = {1,10,20,30};
-	int chosenDifficulty = gameDifficulty[2];
+	int enemyAmountBasedOnDifficulty[] = {1,10,20,30};
+	
 
 	Borders border(5.f, sf::Color::White);
 	LeftContent leftContent(border, window);
@@ -83,16 +83,16 @@ int main()
 	Player player(25.f,1, window, border);
 	std::vector<Enemy> enemyList;
 	//Tworzymy listę wrogów o wybranej trudności gry z ustawień
-	for (int i = 0; i < enemyAmount[2]/4; i++)
+	for (int i = 0; i < enemyAmountBasedOnDifficulty[2]/4; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			enemyList.push_back(Enemy(15.f, 1, window, border, enemyAmount[chosenDifficulty],j,i));
+			enemyList.push_back(Enemy(15.f, 1, window, border, enemyAmountBasedOnDifficulty[gameDifficulty],j,i));
 		}
 	}
 
 	window.setFramerateLimit(60);
-	Menu menu(window.getSize().x, window.getSize().y);
+	Menu menu(window.getSize().x, window.getSize().y, gameDifficulty);
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -156,6 +156,18 @@ int main()
 							fireCooldown.restart();
 							std::cout << "Strzelaj!\n";
 							player.fire();
+						}
+					}
+					if (gameState == 2)
+					{
+						if(event.key.code == sf::Keyboard::Left)
+						{
+							std::cout << "Ułatw grę!\n";
+							menu.lowerDifficulty(gameDifficulty);
+						}
+						else if (event.key.code == sf::Keyboard::Right) {
+							std::cout << "Utrudnij grę!\n";
+							menu.higherDifficulty(gameDifficulty);
 						}
 					}
 

@@ -139,6 +139,7 @@ private:
     bool moving;
     float size;
     sf::Vector2f currentPosition;
+    sf::Vector2f startingPosition;
     float velocity;
     const float MAX_VELOCITY = 300;
     float dx = 300;
