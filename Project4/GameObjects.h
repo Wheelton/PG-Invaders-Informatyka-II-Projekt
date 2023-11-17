@@ -1,4 +1,4 @@
-#include <SFML/Graphics.hpp>
+﻿#include <SFML/Graphics.hpp>
 #include <iostream>
 #include "HUD.h"
 
@@ -13,9 +13,10 @@ private:
     float speed;
     bool alive;
     int weight;
+    bool fireDirection; //true - w górę, false - w dół
 public:
-    Bullet(sf::Vector2f position, float size, float speed) :
-        position(position), size(size), speed(speed), alive(true) {}
+    Bullet(sf::Vector2f position, float size, float speed, bool fireDirection) :
+        position(position), size(size), speed(speed), alive(true), fireDirection(fireDirection) {}
     int getRandomDigit() {
         std::srand(time(nullptr));
         int randomNumber = rand() % 3;
@@ -28,16 +29,25 @@ public:
         }
         weight = getRandomDigit();
         sf::Text bulletText(std::to_string(weight), font, size);
-        bulletText.setFillColor(sf::Color::Yellow);
+        fireDirection ? bulletText.setFillColor(sf::Color::Yellow) : bulletText.setFillColor(sf::Color::Red);
         bulletText.setPosition(position);
         window.draw(bulletText);
         
     }
 
     void update(float dt) {
-        position.y -= speed * dt;
-        if (position.y + size < 0) {
-            alive = false;
+        
+        position.y -= speed * dt * fireDirection;
+        if (fireDirection) //Leci w górę
+        {
+            if (position.y + size < 0) {
+                alive = false;
+            }
+        }
+        else if (!fireDirection) {//Leci w dół
+            if (position.y - size < 0) {
+                alive = false;
+            }
         }
     }
     int getWeight() { return weight; }
@@ -114,9 +124,74 @@ public:
     void fire() {
         float bulletSpeed = 100;
         int bulletSize = 16;
-        bullets.push_back(Bullet(sf::Vector2f((currentPosition.x + size / 2)+ bulletSize/2, currentPosition.y), bulletSize, bulletSpeed));
+        bullets.push_back(Bullet(sf::Vector2f((currentPosition.x + size / 2)+ bulletSize/2, currentPosition.y), bulletSize, bulletSpeed, true));
     }
     void resetBullets() {
         bullets.clear();
+    }
+};
+class Enemy :public GameObject {
+private:
+private:
+    float leftBorder;
+    float rightBorder;
+    float speedMultiplier;
+    bool moving;
+    float size;
+    sf::Vector2f currentPosition;
+    float velocity;
+    const float MAX_VELOCITY = 300;
+    float dx = 300;
+    int amountOfEnemies;
+    int xIndex;
+    int yIndex;
+public:
+    std::vector<Bullet> bullets;
+    Enemy(float size, float speedMultiplier, sf::RenderWindow& window, Borders& border, int amountOfEnemies, int xIndex, int yIndex) :
+        size(size), speedMultiplier(speedMultiplier),
+        currentPosition(sf::Vector2f(rightBorder * 0.9 - (int(size) * xIndex * amountOfEnemies * 0.2), window.getSize().y * 0.1 + (yIndex * int(size) * 4))),
+        leftBorder(window.getSize().x * 0.25 + border.getBorderThickness()),
+        rightBorder(window.getSize().x * 0.75 - border.getBorderThickness() - size),
+        velocity(0),
+        moving(false),
+        amountOfEnemies(amountOfEnemies),
+        xIndex(xIndex),
+        yIndex(yIndex)
+    {}
+    void draw(sf::RenderWindow& window) override {
+        sf::CircleShape enemyIcon(size);
+        enemyIcon.setFillColor(sf::Color::Red);
+        enemyIcon.setPosition(currentPosition);
+        window.draw(enemyIcon);
+    }
+    bool isMoving() { return moving; }
+    void startMoving() {
+        moving = true;
+    }
+    void stopMoving() {
+        velocity = 0;
+        moving = false;
+    }
+    void moveLeft() {
+
+    }
+    void moveRight() {
+
+    }
+    void moveDown() {
+
+    }
+    void fire() {
+
+    }
+    void update(float dt) {
+        float newX = currentPosition.x + velocity * dt * 0.7;
+
+        if (newX >= leftBorder && newX + size <= rightBorder) {
+            currentPosition.x = newX;
+        }
+        else {
+            velocity = 0;
+        }
     }
 };

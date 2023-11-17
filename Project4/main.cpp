@@ -19,8 +19,9 @@ void showMainMenu(bool& timerStarted, Menu& menu, sf::RenderWindow& window) {
 }
 
 void runGame(
-	HUD& hud, sf::RenderWindow& window, RightContent& rightContent, 
-	Timer& timer, Player& player, bool& timerStarted, sf::Clock& frameClock
+	HUD& hud, sf::RenderWindow& window, RightContent& rightContent,
+	Timer& timer, Player& player, bool& timerStarted, sf::Clock& frameClock,
+	std::vector<Enemy>& enemyList
 ) {
 	if (!timerStarted)
 	{
@@ -37,18 +38,23 @@ void runGame(
 	for (auto& bullet : player.bullets) {
 		bullet.draw(window);
 	}
+	for (auto& enemy : enemyList)
+	{
+		enemy.draw(window);
+	}
 	player.draw(window);
 }
 
 void restartGame(
 	HUD& hud, bool& timerStarted, sf::RenderWindow& window, 
 	RightContent& rightContent, Timer& timer, Player& player, 
-	sf::Clock frameClock) {
+	sf::Clock frameClock, std::vector<Enemy>& enemyList
+	) {
 	timerStarted = false;
 	player.stopMoving();
 	player.resetPosition(window);
 	player.resetBullets();
-	runGame(hud, window, rightContent, timer, player, timerStarted, frameClock);
+	runGame(hud, window, rightContent, timer, player, timerStarted, frameClock, enemyList);
 }
 
 
@@ -59,11 +65,12 @@ int main()
 	system("cls");
 
 	sf::RenderWindow window(sf::VideoMode(1280, 768), "PG Invaders");
-
+	int gameDifficulty[] = {0,1,2,3};
 	int scores;
 	bool timerStarted = false;
 	float fireCooldownMultiplier = 1.0;
-
+	int enemyAmount[] = {1,10,20,30};
+	int chosenDifficulty = gameDifficulty[2];
 
 	Borders border(5.f, sf::Color::White);
 	LeftContent leftContent(border, window);
@@ -74,6 +81,16 @@ int main()
 	RightContent rightContent(border, window, timer);
 	HUD hud(border, leftContent, rightContent);
 	Player player(25.f,1, window, border);
+	std::vector<Enemy> enemyList;
+	//Tworzymy listę wrogów o wybranej trudności gry z ustawień
+	for (int i = 0; i < enemyAmount[2]/4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			enemyList.push_back(Enemy(15.f, 1, window, border, enemyAmount[chosenDifficulty],j,i));
+		}
+	}
+
 	window.setFramerateLimit(60);
 	Menu menu(window.getSize().x, window.getSize().y);
 	while (window.isOpen())
@@ -125,7 +142,7 @@ int main()
 						if (event.key.code == sf::Keyboard::R)
 						{
 							std::cout << "Restart!\n";
-							restartGame(hud, timerStarted, window, rightContent, timer, player, frameClock);
+							restartGame(hud, timerStarted, window, rightContent, timer, player, frameClock, enemyList);
 						}
 						else if (event.key.code == sf::Keyboard::Left && !player.isMoving()) {
 							std::cout << "Idź w lewo!\n";
@@ -157,7 +174,7 @@ int main()
 			showMainMenu(timerStarted, menu, window);
 		}
 		else if (gameState == 1) {
-			runGame(hud, window, rightContent, timer, player, timerStarted, frameClock);
+			runGame(hud, window, rightContent, timer, player, timerStarted, frameClock, enemyList);
 		}
 		else {
 			menu.drawSubMenu(window, gameState);
