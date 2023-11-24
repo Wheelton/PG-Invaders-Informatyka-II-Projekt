@@ -201,12 +201,12 @@ public:
         }
     }
     void moveDown() {
-
+        currentPosition.y = currentPosition.y + size;
     }
     void fire() {
 
     }
-    void update(float dt, std::vector<Bullet>& playersBullets) {
+    void update(float dt, std::vector<Bullet>& playersBullets, int& scores) {
         auto condition = [&](Bullet& bullet) {
             return bullet.getCurrentPosition().x + size >= currentPosition.x &&
                 bullet.getCurrentPosition().x <= currentPosition.x + size &&
@@ -216,13 +216,11 @@ public:
 
         for (auto& bullet : playersBullets)
         {
-            if (bullet.getCurrentPosition().x + size >= currentPosition.x &&
-                bullet.getCurrentPosition().x <= currentPosition.x + size &&
-                bullet.getCurrentPosition().y - size <= currentPosition.y &&
-                bullet.getCurrentPosition().y >= currentPosition.y - size)
+            if (condition(bullet))
             {
                 isHit = true;
                 std::cout << "Hit!\n";
+                scores += 50;
             }
         }
         playersBullets.erase(std::remove_if(playersBullets.begin(), playersBullets.end(), condition), playersBullets.end());
@@ -235,8 +233,8 @@ public:
             }
             else {
                 velocity = 0;
-                currentPosition.y = currentPosition.y + size;
                 changeDirection = !changeDirection;
+                moveDown();
             }
         }
     }

@@ -110,8 +110,9 @@ public:
 			menu[4].setString(text);
 		}
 	}
-	void higherDifficulty(int& difficulty) {
-		if (difficulty<3)
+	void higherDifficulty(int& difficulty, int enemyAmountBasedOnDifficulty[]) {
+		int n = sizeof(enemyAmountBasedOnDifficulty) / sizeof(int);
+		if (difficulty<n)
 		{
 			difficulty++;
 			gameDifficulty = difficulty;

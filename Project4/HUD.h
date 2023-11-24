@@ -170,6 +170,11 @@ public:
 	}
 	void updateScores(int scores) {
 		this->scores = scores;
+		text[1].setString("Punkty: " + std::to_string(scores));
+	}
+	void resetScores(int& scores) {
+		scores = 0;
+		this->scores = 0;
 	}
 	int getScores() { return scores; }
 };
