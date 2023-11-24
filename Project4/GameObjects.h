@@ -143,7 +143,6 @@ public:
 };
 class Enemy :public GameObject {
 private:
-private:
     float leftBorder;
     float rightBorder;
     float speedMultiplier;
@@ -157,6 +156,7 @@ private:
     int amountOfEnemies;
     int xIndex;
     int yIndex;
+    bool changeDirection = false;
 public:
     std::vector<Bullet> bullets;
     Enemy(float size, float speedMultiplier, sf::RenderWindow& window, Borders& border, int amountOfEnemies, int xIndex, int yIndex) :
@@ -185,10 +185,15 @@ public:
         moving = false;
     }
     void moveLeft() {
-
+        if (velocity > -MAX_VELOCITY) //Idź w lewo
+        {
+            velocity = -dx * speedMultiplier;
+        }    
     }
     void moveRight() {
-
+        if (velocity < MAX_VELOCITY) { //Idź w prawo
+            velocity = dx * speedMultiplier;
+        }
     }
     void moveDown() {
 
@@ -197,13 +202,15 @@ public:
 
     }
     void update(float dt) {
+        changeDirection ? moveRight() : moveLeft();
         float newX = currentPosition.x + velocity * dt * 0.7;
-
         if (newX >= leftBorder && newX + size <= rightBorder) {
-            currentPosition.x = newX;
+            currentPosition.x = newX;   
         }
         else {
             velocity = 0;
+            currentPosition.y = currentPosition.y + size;
+            changeDirection = !changeDirection;
         }
     }
 };

@@ -17,7 +17,17 @@ void showMainMenu(bool& timerStarted, Menu& menu, sf::RenderWindow& window) {
 	timerStarted = false;
 	menu.draw(window);
 }
-
+void generateEnemyList(
+	std::vector<Enemy>& enemyList, 
+	sf::RenderWindow& window, Borders& border, int& enemyAmount) {
+	for (int i = 0; i < enemyAmount / 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			enemyList.push_back(Enemy(15.f, 0.5, window, border, enemyAmount, j, i));
+		}
+	}
+}
 void runGame(
 	HUD& hud, sf::RenderWindow& window, RightContent& rightContent,
 	Timer& timer, Player& player, bool& timerStarted, sf::Clock& frameClock,
@@ -40,6 +50,7 @@ void runGame(
 	}
 	for (auto& enemy : enemyList)
 	{
+		enemy.update(dt);
 		enemy.draw(window);
 	}
 	player.draw(window);
@@ -48,8 +59,11 @@ void runGame(
 void restartGame(
 	HUD& hud, bool& timerStarted, sf::RenderWindow& window, 
 	RightContent& rightContent, Timer& timer, Player& player, 
-	sf::Clock frameClock, std::vector<Enemy>& enemyList
+	sf::Clock frameClock, std::vector<Enemy>& enemyList, Borders& border,
+	int enemyAmount
 	) {
+	enemyList.clear();
+	generateEnemyList(enemyList, window, border, enemyAmount);
 	timerStarted = false;
 	player.stopMoving();
 	player.resetPosition(window);
@@ -82,14 +96,7 @@ int main()
 	HUD hud(border, leftContent, rightContent);
 	Player player(25.f,1, window, border);
 	std::vector<Enemy> enemyList;
-	//Tworzymy listę wrogów o wybranej trudności gry z ustawień
-	for (int i = 0; i < enemyAmountBasedOnDifficulty[2]/4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			enemyList.push_back(Enemy(15.f, 1, window, border, enemyAmountBasedOnDifficulty[gameDifficulty],j,i));
-		}
-	}
+	
 
 	window.setFramerateLimit(60);
 	Menu menu(window.getSize().x, window.getSize().y, gameDifficulty);
@@ -115,6 +122,8 @@ int main()
 
 						if (menu.getSelectedOption() == 0) {
 							std::cout << "Opcja Graj wybrana!\n";
+							//Tworzymy listę wrogów o wybranej trudności gry z ustawień
+							generateEnemyList(enemyList, window, border, enemyAmountBasedOnDifficulty[gameDifficulty]);
 							gameState = 1;
 						}
 						else if (menu.getSelectedOption() == 1) {
@@ -134,6 +143,7 @@ int main()
 				else if (gameState != 0) {
 					if (event.key.code == sf::Keyboard::Backspace)
 					{
+						enemyList.clear();
 						std::cout << "Powrót do meni!\n";
 						gameState = 0;
 					}
@@ -142,7 +152,7 @@ int main()
 						if (event.key.code == sf::Keyboard::R)
 						{
 							std::cout << "Restart!\n";
-							restartGame(hud, timerStarted, window, rightContent, timer, player, frameClock, enemyList);
+							restartGame(hud, timerStarted, window, rightContent, timer, player, frameClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty]);
 						}
 						else if (event.key.code == sf::Keyboard::Left && !player.isMoving()) {
 							std::cout << "Idź w lewo!\n";
