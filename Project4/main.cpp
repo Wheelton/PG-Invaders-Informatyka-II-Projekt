@@ -48,10 +48,14 @@ void runGame(
 	for (auto& bullet : player.bullets) {
 		bullet.draw(window);
 	}
+	
 	for (auto& enemy : enemyList)
 	{
-		enemy.update(dt);
-		enemy.draw(window);
+		if (!enemy.getIsHit())
+		{
+			enemy.update(dt, player.bullets);
+			enemy.draw(window);
+		}
 	}
 	player.draw(window);
 }

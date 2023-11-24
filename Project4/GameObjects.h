@@ -3,6 +3,7 @@
 #include "HUD.h"
 #include <random>
 #include <chrono>
+#include <algorithm>
 
 class GameObject {
 public:
@@ -62,7 +63,9 @@ public:
         }
     }
     int getWeight() { return weight; }
+    float getSize() { return size; }
     bool isAlive() { return alive; }
+    sf::Vector2f getCurrentPosition() { return position; }
 };
 class Player : public GameObject {
 private:
@@ -157,6 +160,7 @@ private:
     int xIndex;
     int yIndex;
     bool changeDirection = false;
+    bool isHit=false;
 public:
     std::vector<Bullet> bullets;
     Enemy(float size, float speedMultiplier, sf::RenderWindow& window, Borders& border, int amountOfEnemies, int xIndex, int yIndex) :
@@ -177,6 +181,7 @@ public:
         window.draw(enemyIcon);
     }
     bool isMoving() { return moving; }
+    bool getIsHit() { return isHit; }
     void startMoving() {
         moving = true;
     }
@@ -201,16 +206,38 @@ public:
     void fire() {
 
     }
-    void update(float dt) {
-        changeDirection ? moveRight() : moveLeft();
-        float newX = currentPosition.x + velocity * dt * 0.7;
-        if (newX >= leftBorder && newX + size <= rightBorder) {
-            currentPosition.x = newX;   
+    void update(float dt, std::vector<Bullet>& playersBullets) {
+        auto condition = [&](Bullet& bullet) {
+            return bullet.getCurrentPosition().x + size >= currentPosition.x &&
+                bullet.getCurrentPosition().x <= currentPosition.x + size &&
+                bullet.getCurrentPosition().y - size <= currentPosition.y &&
+                bullet.getCurrentPosition().y  >= currentPosition.y-size;
+            };
+
+        for (auto& bullet : playersBullets)
+        {
+            if (bullet.getCurrentPosition().x + size >= currentPosition.x &&
+                bullet.getCurrentPosition().x <= currentPosition.x + size &&
+                bullet.getCurrentPosition().y - size <= currentPosition.y &&
+                bullet.getCurrentPosition().y >= currentPosition.y - size)
+            {
+                isHit = true;
+                std::cout << "Hit!\n";
+            }
         }
-        else {
-            velocity = 0;
-            currentPosition.y = currentPosition.y + size;
-            changeDirection = !changeDirection;
+        playersBullets.erase(std::remove_if(playersBullets.begin(), playersBullets.end(), condition), playersBullets.end());
+        if (!isHit)
+        {
+            changeDirection ? moveRight() : moveLeft();
+            float newX = currentPosition.x + velocity * dt * 0.7;
+            if (newX >= leftBorder && newX + size <= rightBorder) {
+                currentPosition.x = newX;
+            }
+            else {
+                velocity = 0;
+                currentPosition.y = currentPosition.y + size;
+                changeDirection = !changeDirection;
+            }
         }
     }
 };
