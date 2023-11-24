@@ -1,6 +1,8 @@
 ﻿#include <SFML/Graphics.hpp>
 #include <iostream>
 #include "HUD.h"
+#include <random>
+#include <chrono>
 
 class GameObject {
 public:
@@ -9,29 +11,38 @@ public:
 class Bullet : public GameObject {
 private:
     sf::Vector2f position;
+    sf::Text bulletObject;
     float size;
     float speed;
     bool alive;
     int weight;
+    bool weightIsSet = false;
     bool fireDirection; //true - w górę, false - w dół
 public:
     Bullet(sf::Vector2f position, float size, float speed, bool fireDirection) :
-        position(position), size(size), speed(speed), alive(true), fireDirection(fireDirection) {}
-    int getRandomDigit() {
-        std::srand(time(nullptr));
-        int randomNumber = rand() % 3;
-        return randomNumber + 3;
+        position(position), size(size), speed(speed), alive(true), fireDirection(fireDirection) {
+       
     }
+   
     void draw(sf::RenderWindow& window) override {
         sf::Font font;
         if (!font.loadFromFile("fonts/Arimo-Regular.ttf")) {
             std::cerr << "Error loading font";
         }
-        weight = getRandomDigit();
-        sf::Text bulletText(std::to_string(weight), font, size);
-        fireDirection ? bulletText.setFillColor(sf::Color::Yellow) : bulletText.setFillColor(sf::Color::Red);
-        bulletText.setPosition(position);
-        window.draw(bulletText);
+        std::mt19937 r{ static_cast<std::mt19937::result_type>(
+        std::chrono::steady_clock::now().time_since_epoch().count()
+        ) };
+        std::uniform_int_distribution<int> range{ 4,5 };
+
+        if (!weightIsSet)
+        {
+            weightIsSet = true;
+            weight = (int)range(r);
+        }
+        bulletObject = sf::Text(std::to_string(weight), font, size);
+        fireDirection ? bulletObject.setFillColor(sf::Color::Yellow) : bulletObject.setFillColor(sf::Color::Red);
+        bulletObject.setPosition(position);
+        window.draw(bulletObject);
         
     }
 
