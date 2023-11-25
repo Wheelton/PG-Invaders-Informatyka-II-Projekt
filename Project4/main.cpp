@@ -33,9 +33,11 @@ void gameOver() {
 }
 void runGame(
 	HUD& hud, sf::RenderWindow& window, RightContent& rightContent,
-	Timer& timer, Player& player, bool& timerStarted, sf::Clock& frameClock,
-	std::vector<Enemy>& enemyList, int& scores
+	Timer& timer, Player& player, bool& timerStarted, sf::Clock& playerTextureClock,
+	std::vector<Enemy>& enemyList, int& scores, float& elapsedPlayerTextureTime, float& textureChangeInterval,
+	sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime
 ) {
+	//Gra tylko się zaczęła, zresetuj wszystko
 	if (!timerStarted)
 	{
 		player.resetBullets();
@@ -44,31 +46,52 @@ void runGame(
 	}
 	timer.update();
 	rightContent.updateTimer();
-	hud.draw(window);
-	sf::Time elapsed = frameClock.restart();
-	float dt = elapsed.asSeconds();
-	player.update(dt);
+	hud.draw(window); //Odśwież HUD
+
+	sf::Time elapsedPlayerTexture = playerTextureClock.restart(); //Czas od ostatniego odświeżania ekranu dla gracza
+	float dtPlayer = elapsedPlayerTexture.asSeconds();
+	elapsedPlayerTextureTime += dtPlayer;
+
+	sf::Time elapsedEnemyTexture = enemyTextureClock.restart(); //Czas od ostatniego odświeżania ekranu dla wroga
+	float dtEnemy = elapsedEnemyTexture.asSeconds();
+	elapsedEnemyTextureTime += dtEnemy;
+	// Zmień teksturę gracza co {textureChangeInterval} sekundy
+	if (elapsedPlayerTextureTime >= textureChangeInterval) {
+		player.updateTexture();
+		elapsedPlayerTextureTime = 0.0f;  // Reset timer
+	}
+	player.update(dtPlayer);
+	//Rysuj każdy pocisk gracza
 	for (auto& bullet : player.bullets) {
 		bullet.draw(window);
 	}
-	
+	if (elapsedEnemyTextureTime >= textureChangeInterval)
+	{
+		for (auto& enemy : enemyList)
+		{
+			enemy.updateTexture();
+		}
+		elapsedEnemyTextureTime = 0.0f;
+	}
+	//Sprawdź każdego wroga, czy gracz trafił pociskiem w niego i wyświetl wroga
 	for (auto& enemy : enemyList)
 	{
 		if (!enemy.getIsHit())
 		{
-			enemy.update(dt, player.bullets, scores);
+			enemy.update(dtEnemy, player.bullets, scores);
 			enemy.draw(window);
 		}
 	}
-	rightContent.updateScores(scores);
-	player.draw(window);
+	rightContent.updateScores(scores);//Odśwież punkty
+	player.draw(window); //Rysuj gracza
 }
 
 void restartGame(
 	HUD& hud, bool& timerStarted, sf::RenderWindow& window, 
 	RightContent& rightContent, Timer& timer, Player& player, 
 	sf::Clock frameClock, std::vector<Enemy>& enemyList, Borders& border,
-	int enemyAmount, int& scores
+	int enemyAmount, int& scores, float& elapsedTime, float& textureChangeInterval,
+	sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime
 	) {
 	enemyList.clear();
 	rightContent.resetScores(scores);
@@ -77,7 +100,7 @@ void restartGame(
 	player.stopMoving();
 	player.resetPosition(window);
 	player.resetBullets();
-	runGame(hud, window, rightContent, timer, player, timerStarted, frameClock, enemyList, scores);
+	runGame(hud, window, rightContent, timer, player, timerStarted, frameClock, enemyList, scores, elapsedTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime);
 }
 
 
@@ -96,15 +119,24 @@ int main()
 	
 
 	Borders border(5.f, sf::Color::White);
-	LeftContent leftContent(border, window);
 	Timer timer(0);
-	sf::Clock frameClock;
-	sf::Clock fireCooldown;
 
-	RightContent rightContent(border, window, timer);
-	HUD hud(border, leftContent, rightContent);
+	float elapsedPlayerTextureTime = 0.0f;
+	float elapsedEnemyTextureTime = 0.0f;
+	float textureChangeInterval = 0.1f;
+
+	sf::Clock playerTextureClock;
+	sf::Clock playerFireCooldown;
+
+	sf::Clock enemyFireCooldown;
+	sf::Clock enemyTextureClock;
+
 	Player player(25.f,1, window, border);
 	std::vector<Enemy> enemyList;
+
+	RightContent rightContent(border, window, timer);
+	LeftContent leftContent(border, window);
+	HUD hud(border, leftContent, rightContent);
 	
 	
 	window.setFramerateLimit(60);
@@ -131,21 +163,21 @@ int main()
 					else if (event.key.code == sf::Keyboard::Return) {
 
 						if (menu.getSelectedOption() == 0) {
-							std::cout << "Opcja Graj wybrana!\n";
+							//std::cout << "Opcja Graj wybrana!\n";
 							//Tworzymy listę wrogów o wybranej trudności gry z ustawień
 							generateEnemyList(enemyList, window, border, enemyAmountBasedOnDifficulty[gameDifficulty]);
 							gameState = 1;
 						}
 						else if (menu.getSelectedOption() == 1) {
-							std::cout << "Opcja Ustawienia wybrana!\n";
+							//std::cout << "Opcja Ustawienia wybrana!\n";
 							gameState = 2;
 						}
 						else if (menu.getSelectedOption() == 2) {
-							std::cout << "Opcja O grze wybrana!\n";
+							//std::cout << "Opcja O grze wybrana!\n";
 							gameState = 3;
 						}
 						else if (menu.getSelectedOption() == 3) {
-							std::cout << "Opcja Zamknij wybrana!\n";
+							//std::cout << "Opcja Zamknij wybrana!\n";
 							window.close();
 						}
 					}
@@ -153,28 +185,32 @@ int main()
 				else if (gameState != 0) {
 					if (event.key.code == sf::Keyboard::Backspace)
 					{
-						restartGame(hud, timerStarted, window, rightContent, timer, player, frameClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty], scores);
-						std::cout << "Powrót do meni!\n";
+						restartGame(hud, timerStarted, window, rightContent, timer, 
+							player, playerTextureClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty],
+							scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime);
+						//std::cout << "Powrót do meni!\n";
 						gameState = 0;
 					}
 					if (gameState == 1)
 					{
 						if (event.key.code == sf::Keyboard::R)
 						{
-							std::cout << "Restart!\n";
-							restartGame(hud, timerStarted, window, rightContent, timer, player, frameClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty], scores);
+							//std::cout << "Restart!\n";
+							restartGame(hud, timerStarted, window, rightContent, timer,
+								player, playerTextureClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty],
+								scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime);
 						}
 						else if (event.key.code == sf::Keyboard::Left && !player.isMoving()) {
-							std::cout << "Idź w lewo!\n";
+							//std::cout << "Idź w lewo!\n";
 							player.moveLeft();
 						}
 						else if (event.key.code == sf::Keyboard::Right && !player.isMoving()) {
-							std::cout << "Idź w prawo!\n";
+							//std::cout << "Idź w prawo!\n";
 							player.moveRight();
 						}
-						else if (event.key.code == sf::Keyboard::Space && fireCooldown.getElapsedTime().asSeconds() > FIRE_COOLDOWN * fireCooldownMultiplier) {
-							fireCooldown.restart();
-							std::cout << "Strzelaj!\n";
+						else if (event.key.code == sf::Keyboard::Space && playerFireCooldown.getElapsedTime().asSeconds() > FIRE_COOLDOWN * fireCooldownMultiplier) {
+							playerFireCooldown.restart();
+							//std::cout << "Strzelaj!\n";
 							player.fire();
 						}
 					}
@@ -182,20 +218,21 @@ int main()
 					{
 						if(event.key.code == sf::Keyboard::Left)
 						{
-							std::cout << "Ułatw grę!\n";
+							//std::cout << "Ułatw grę!\n";
 							menu.lowerDifficulty(gameDifficulty);
 						}
 						else if (event.key.code == sf::Keyboard::Right) {
-							std::cout << "Utrudnij grę!\n";
+							//std::cout << "Utrudnij grę!\n";
 							menu.higherDifficulty(gameDifficulty,enemyAmountBasedOnDifficulty);
 						}
 					}
 
 				}
 			}
-			else if (event.type == sf::Event::KeyReleased)
+			else if (gameState == 1 && event.type == sf::Event::KeyReleased)
 			{
 				if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::Right) {
+					//std::cout << "Stój!\n";
 					player.stopMoving();
 				}
 			}
@@ -206,7 +243,7 @@ int main()
 			showMainMenu(timerStarted, menu, window);
 		}
 		else if (gameState == 1) {
-			runGame(hud, window, rightContent, timer, player, timerStarted, frameClock, enemyList, scores);
+			runGame(hud, window, rightContent, timer, player, timerStarted, playerTextureClock, enemyList, scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime);
 		}
 		else {
 			menu.drawSubMenu(window, gameState);
