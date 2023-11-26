@@ -251,7 +251,7 @@ private:
     int textureSwitcher = 0;
     sf::Texture enemyTexture;
     sf::Sprite enemySprite;
-    sf::Image texture[3][3][3];
+    sf::Image texture[3][6][3];
     int enemyColorId;
 public:
     std::vector<Bullet> bullets;
@@ -271,17 +271,17 @@ public:
         std::chrono::steady_clock::now().time_since_epoch().count()
         ) };
         std::uniform_int_distribution<int> range{ 0, 2 };
-        enemyColorId = 0;//(int)range(r)
+        enemyColorId = (int)range(r);
         //Ładuj wszystkie tekstury
         for (int i = 0; i < 3; i++){
-            for (int j = 0; j < 3; j++) {
+            for (int j = 0; j < 6; j++) {
                 for (int k = 0; k < 3; k++)
                 {
                     std::string path;
-                    std::string enemyState[] = {"WL","WR","F"};
+                    std::string enemyState[] = {"WL","WR","DL","DR","FL","FR"};
                     std::string enemyColorPath[] = { "Blue/Blue_Slime_","Green/Green_Slime_","Red/Red_Slime_" };
                    
-                    path = "resources/Platformer Slimes v1.3/"+enemyColorPath[i] + enemyState[j] + std::to_string(k) + ".png";
+                    path = "resources/Platformer Slimes v1.3/"+enemyColorPath[i] + enemyState[j] +"_"+ std::to_string(k) + ".png";
                   
                    
                     if (!texture[i][j][k].loadFromFile(path)) {
@@ -291,7 +291,7 @@ public:
             }
         }
 
-        enemyTexture.loadFromImage(texture[0][0][0]);
+        enemyTexture.loadFromImage(texture[enemyColorId][0][0]);
     }
     void draw(sf::RenderWindow& window) override {
         enemySprite.setTexture(enemyTexture);
