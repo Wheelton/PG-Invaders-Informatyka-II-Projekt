@@ -60,7 +60,6 @@ void runGame(
 		player.updateTexture();
 		elapsedPlayerTextureTime = 0.0f;  // Reset timer
 	}
-	player.update(dtPlayer);
 	//Rysuj każdy pocisk gracza
 	for (auto& bullet : player.bullets) {
 		bullet.draw(window);
@@ -76,12 +75,17 @@ void runGame(
 	//Sprawdź każdego wroga, czy gracz trafił pociskiem w niego i wyświetl wroga
 	for (auto& enemy : enemyList)
 	{
-		if (!enemy.getIsHit())
+		if (!enemy.getIsDead())
 		{
 			enemy.update(dtEnemy, player.bullets, scores);
+			for (auto& bullet : enemy.bullets) {
+				bullet.draw(window);
+			}
+			player.checkIfIsHit(enemy.bullets);
 			enemy.draw(window);
 		}
 	}
+	player.update(dtPlayer);
 	rightContent.updateScores(scores);//Odśwież punkty
 	player.draw(window); //Rysuj gracza
 }
@@ -91,11 +95,14 @@ void restartGame(
 	RightContent& rightContent, Timer& timer, Player& player, 
 	sf::Clock frameClock, std::vector<Enemy>& enemyList, Borders& border,
 	int enemyAmount, int& scores, float& elapsedTime, float& textureChangeInterval,
-	sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime
+	sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime, int gameState
 	) {
 	enemyList.clear();
 	rightContent.resetScores(scores);
-	generateEnemyList(enemyList, window, border, enemyAmount);
+	if (gameState != 0)
+	{
+		generateEnemyList(enemyList, window, border, enemyAmount);
+	}
 	timerStarted = false;
 	player.stopMoving();
 	player.resetPosition(window);
@@ -185,11 +192,11 @@ int main()
 				else if (gameState != 0) {
 					if (event.key.code == sf::Keyboard::Backspace)
 					{
+						gameState = 0;
 						restartGame(hud, timerStarted, window, rightContent, timer, 
 							player, playerTextureClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty],
-							scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime);
+							scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, gameState);
 						//std::cout << "Powrót do meni!\n";
-						gameState = 0;
 					}
 					if (gameState == 1)
 					{
@@ -198,7 +205,7 @@ int main()
 							//std::cout << "Restart!\n";
 							restartGame(hud, timerStarted, window, rightContent, timer,
 								player, playerTextureClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty],
-								scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime);
+								scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, gameState);
 						}
 						else if (event.key.code == sf::Keyboard::Left && !player.isMoving()) {
 							//std::cout << "Idź w lewo!\n";
