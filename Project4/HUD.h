@@ -120,6 +120,7 @@ private:
 	sf::Font font;
 	sf::Text text[RIGHT_CONTENT_ITEMS_COUNT];
 	int scores;
+	int enemyCounter = 0;
 public:
 	RightContent(Borders& border, sf::RenderWindow& window, Timer& timer) :border(border), timer(timer) {
 		if (!font.loadFromFile("fonts/Arimo-Regular.ttf")) {
@@ -151,7 +152,7 @@ public:
 		text[2].setFont(font);
 		text[2].setCharacterSize(fontSize);
 		text[2].setFillColor(sf::Color::White);
-		text[2].setString("Wrogi: " + std::to_string(0));
+		text[2].setString("Wrogi: " + std::to_string(enemyCounter));
 		text[2].setPosition(sf::Vector2f(rightBorderX + width / 2 - 150, height / 2 * modifier + spaceBetweenLines));
 
 	}
@@ -168,7 +169,7 @@ public:
 	void updateTimer() {
 		text[0].setString("Czas: " + std::to_string(timer.getCurrentSeconds()) + "s");
 	}
-	void updateScores(int scores) {
+	void updateScores(int& scores) {
 		this->scores = scores;
 		text[1].setString("Punkty: " + std::to_string(scores));
 	}
@@ -177,6 +178,14 @@ public:
 		this->scores = 0;
 	}
 	int getScores() { return scores; }
+	void updateEnemyCounter(int& enemyCount) {
+		enemyCounter = enemyCount;
+		text[2].setString("Wrogi: " + std::to_string(enemyCounter));
+	}
+	void resetEnemyCounter(int& enemyCount) {
+		enemyCounter = enemyCount;
+	}
+	int getEnemyCount() { return enemyCounter; }
 };
 class HUD:public HudElement {
 private:
@@ -191,4 +200,21 @@ public:
 		leftContent.draw(window);
 		rightContent.draw(window);
 	}
+	void updateTimer() {
+		rightContent.updateTimer();
+	}
+	void updateScores(int scores) {
+		rightContent.updateScores(scores);
+	}
+	void resetScores(int& scores) {
+		rightContent.resetScores(scores);
+	}
+	int getScores() { return rightContent.getScores(); }
+	void updateEnemyCounter(int& enemyCount) {
+		rightContent.updateEnemyCounter(enemyCount);
+	}
+	void resetEnemyCounter(int& enemyCount) {
+		rightContent.resetEnemyCounter(enemyCount);
+	}
+	int getEnemyCount() { return rightContent.getEnemyCount(); }
 };

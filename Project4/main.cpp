@@ -32,10 +32,10 @@ void gameOver() {
 
 }
 void runGame(
-	HUD& hud, sf::RenderWindow& window, RightContent& rightContent,
+	HUD& hud, sf::RenderWindow& window,
 	Timer& timer, Player& player, bool& timerStarted, sf::Clock& playerTextureClock,
 	std::vector<Enemy>& enemyList, int& scores, float& elapsedPlayerTextureTime, float& textureChangeInterval,
-	sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime
+	sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime, int& enemyCount
 ) {
 	//Gra tylko się zaczęła, zresetuj wszystko
 	if (!timerStarted)
@@ -44,61 +44,67 @@ void runGame(
 		timer.resetTimer();
 		timerStarted = true;
 	}
-	timer.update();
-	rightContent.updateTimer();
-	hud.draw(window); //Odśwież HUD
-
-	sf::Time elapsedPlayerTexture = playerTextureClock.restart(); //Czas od ostatniego odświeżania ekranu dla gracza
-	float dtPlayer = elapsedPlayerTexture.asSeconds();
-	elapsedPlayerTextureTime += dtPlayer;
-
-	sf::Time elapsedEnemyTexture = enemyTextureClock.restart(); //Czas od ostatniego odświeżania ekranu dla wroga
-	float dtEnemy = elapsedEnemyTexture.asSeconds();
-	elapsedEnemyTextureTime += dtEnemy;
-	// Zmień teksturę gracza co {textureChangeInterval} sekundy
-	if (elapsedPlayerTextureTime >= textureChangeInterval) {
-		player.updateTexture();
-		elapsedPlayerTextureTime = 0.0f;  // Reset timer
-	}
-	//Rysuj każdy pocisk gracza
-	for (auto& bullet : player.bullets) {
-		bullet.draw(window);
-	}
-	if (elapsedEnemyTextureTime >= textureChangeInterval)
+	if (enemyCount > 0)
 	{
+
+
+		timer.update();
+		hud.updateTimer();
+		hud.updateEnemyCounter(enemyCount);
+		hud.draw(window); //Odśwież HUD
+
+		sf::Time elapsedPlayerTexture = playerTextureClock.restart(); //Czas od ostatniego odświeżania ekranu dla gracza
+		float dtPlayer = elapsedPlayerTexture.asSeconds();
+		elapsedPlayerTextureTime += dtPlayer;
+
+		sf::Time elapsedEnemyTexture = enemyTextureClock.restart(); //Czas od ostatniego odświeżania ekranu dla wroga
+		float dtEnemy = elapsedEnemyTexture.asSeconds();
+		elapsedEnemyTextureTime += dtEnemy;
+		// Zmień teksturę gracza co {textureChangeInterval} sekundy
+		if (elapsedPlayerTextureTime >= textureChangeInterval) {
+			player.updateTexture();
+			elapsedPlayerTextureTime = 0.0f;  // Reset timer
+		}
+		//Rysuj każdy pocisk gracza
+		for (auto& bullet : player.bullets) {
+			bullet.draw(window);
+		}
+		if (elapsedEnemyTextureTime >= textureChangeInterval)
+		{
+			for (auto& enemy : enemyList)
+			{
+				enemy.updateTexture();
+			}
+			elapsedEnemyTextureTime = 0.0f;
+		}
+		//Sprawdź każdego wroga, czy gracz trafił pociskiem w niego i wyświetl wroga
 		for (auto& enemy : enemyList)
 		{
-			enemy.updateTexture();
-		}
-		elapsedEnemyTextureTime = 0.0f;
-	}
-	//Sprawdź każdego wroga, czy gracz trafił pociskiem w niego i wyświetl wroga
-	for (auto& enemy : enemyList)
-	{
-		if (!enemy.getIsDead())
-		{
-			enemy.update(dtEnemy, player.bullets, scores);
-			for (auto& bullet : enemy.bullets) {
-				bullet.draw(window);
+			if (!enemy.getIsDead())
+			{
+				enemy.update(dtEnemy, player.bullets, scores, enemyCount);
+				for (auto& bullet : enemy.bullets) {
+					bullet.draw(window);
+				}
+				player.checkIfIsHit(enemy.bullets);
+				enemy.draw(window);
 			}
-			player.checkIfIsHit(enemy.bullets);
-			enemy.draw(window);
 		}
+		player.update(dtPlayer);
+		hud.updateScores(scores);//Odśwież punkty
+		player.draw(window); //Rysuj gracza
 	}
-	player.update(dtPlayer);
-	rightContent.updateScores(scores);//Odśwież punkty
-	player.draw(window); //Rysuj gracza
 }
 
 void restartGame(
-	HUD& hud, bool& timerStarted, sf::RenderWindow& window, 
-	RightContent& rightContent, Timer& timer, Player& player, 
+	HUD& hud, bool& timerStarted, sf::RenderWindow& window, Timer& timer, Player& player, 
 	sf::Clock frameClock, std::vector<Enemy>& enemyList, Borders& border,
-	int enemyAmount, int& scores, float& elapsedTime, float& textureChangeInterval,
+	int& enemyAmount, int& scores, float& elapsedTime, float& textureChangeInterval,
 	sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime, int gameState
 	) {
 	enemyList.clear();
-	rightContent.resetScores(scores);
+	hud.resetScores(scores);
+	hud.resetEnemyCounter(enemyAmount);
 	if (gameState != 0)
 	{
 		generateEnemyList(enemyList, window, border, enemyAmount);
@@ -107,7 +113,7 @@ void restartGame(
 	player.stopMoving();
 	player.resetPosition(window);
 	player.resetBullets();
-	runGame(hud, window, rightContent, timer, player, timerStarted, frameClock, enemyList, scores, elapsedTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime);
+	runGame(hud, window, timer, player, timerStarted, frameClock, enemyList, scores, elapsedTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, enemyAmount);
 }
 
 
@@ -123,7 +129,7 @@ int main()
 	bool timerStarted = false;
 	float fireCooldownMultiplier = 1.0;
 	int enemyAmountBasedOnDifficulty[] = {12,20,28};
-	
+	int enemyCounter = enemyAmountBasedOnDifficulty[gameDifficulty];
 
 	Borders border(5.f, sf::Color::White);
 	Timer timer(0);
@@ -172,7 +178,7 @@ int main()
 						if (menu.getSelectedOption() == 0) {
 							//std::cout << "Opcja Graj wybrana!\n";
 							//Tworzymy listę wrogów o wybranej trudności gry z ustawień
-							generateEnemyList(enemyList, window, border, enemyAmountBasedOnDifficulty[gameDifficulty]);
+							generateEnemyList(enemyList, window, border, enemyCounter);
 							gameState = 1;
 						}
 						else if (menu.getSelectedOption() == 1) {
@@ -193,8 +199,9 @@ int main()
 					if (event.key.code == sf::Keyboard::Backspace)
 					{
 						gameState = 0;
-						restartGame(hud, timerStarted, window, rightContent, timer, 
-							player, playerTextureClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty],
+						enemyCounter = enemyAmountBasedOnDifficulty[gameDifficulty];
+						restartGame(hud, timerStarted, window, timer, 
+							player, playerTextureClock, enemyList, border, enemyCounter,
 							scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, gameState);
 						//std::cout << "Powrót do meni!\n";
 					}
@@ -203,8 +210,9 @@ int main()
 						if (event.key.code == sf::Keyboard::R)
 						{
 							//std::cout << "Restart!\n";
-							restartGame(hud, timerStarted, window, rightContent, timer,
-								player, playerTextureClock, enemyList, border, enemyAmountBasedOnDifficulty[gameDifficulty],
+							enemyCounter = enemyAmountBasedOnDifficulty[gameDifficulty];
+							restartGame(hud, timerStarted, window, timer,
+								player, playerTextureClock, enemyList, border, enemyCounter,
 								scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, gameState);
 						}
 						else if (event.key.code == sf::Keyboard::Left && !player.isMoving()) {
@@ -250,7 +258,7 @@ int main()
 			showMainMenu(timerStarted, menu, window);
 		}
 		else if (gameState == 1) {
-			runGame(hud, window, rightContent, timer, player, timerStarted, playerTextureClock, enemyList, scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime);
+			runGame(hud, window, timer, player, timerStarted, playerTextureClock, enemyList, scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, enemyCounter);
 		}
 		else {
 			menu.drawSubMenu(window, gameState);

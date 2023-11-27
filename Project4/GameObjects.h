@@ -450,15 +450,15 @@ public:
         textureSwitcher = 0;
         stopMoving();
     }
-    void update(float dt, std::vector<Bullet>& playersBullets, int& scores) {
-        checkIfIsHit(dt, playersBullets, scores);
+    void update(float dt, std::vector<Bullet>& playersBullets, int& scores, int& enemyCount) {
+        checkIfIsHit(dt, playersBullets, scores, enemyCount);
         fire();
         for (auto& bullet : bullets) {
             bullet.update(dt);
         }
         bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());
     }
-    void checkIfIsHit(float dt, std::vector<Bullet>& playersBullets, int& scores) {
+    void checkIfIsHit(float dt, std::vector<Bullet>& playersBullets, int& scores, int& enemyCount) {
         auto condition = [&](Bullet& bullet) {
             return bullet.getCurrentPosition().x >= currentPosition.x &&
                 bullet.getCurrentPosition().x <= currentPosition.x + size &&
@@ -473,6 +473,7 @@ public:
                 die();
                 std::cout << "Hit!\n";
                 scores += 10;
+                enemyCount>0 ? enemyCount--:NULL;
             }
         }
         playersBullets.erase(std::remove_if(playersBullets.begin(), playersBullets.end(), condition), playersBullets.end());
