@@ -152,7 +152,7 @@ public:
 		text[2].setFont(font);
 		text[2].setCharacterSize(fontSize);
 		text[2].setFillColor(sf::Color::White);
-		text[2].setString("Wrogi: " + std::to_string(enemyCounter));
+		text[2].setString("Wrogowie: " + std::to_string(enemyCounter));
 		text[2].setPosition(sf::Vector2f(rightBorderX + width / 2 - 150, height / 2 * modifier + spaceBetweenLines));
 
 	}
@@ -180,7 +180,7 @@ public:
 	int getScores() { return scores; }
 	void updateEnemyCounter(int& enemyCount) {
 		enemyCounter = enemyCount;
-		text[2].setString("Wrogi: " + std::to_string(enemyCounter));
+		text[2].setString("Wrogowie: " + std::to_string(enemyCounter));
 	}
 	void resetEnemyCounter(int& enemyCount) {
 		enemyCounter = enemyCount;

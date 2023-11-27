@@ -238,8 +238,8 @@ public:
     void checkIfIsHit(std::vector<Bullet>& enemyBullets) {
         auto condition = [&](Bullet& bullet) {
             return bullet.getCurrentPosition().x >= currentPosition.x &&
-                bullet.getCurrentPosition().x <= currentPosition.x + size &&
-                bullet.getCurrentPosition().y <= currentPosition.y + size &&
+                bullet.getCurrentPosition().x <= currentPosition.x + 32 &&
+                bullet.getCurrentPosition().y <= currentPosition.y + 64 &&
                 bullet.getCurrentPosition().y >= currentPosition.y;
             };
 
@@ -461,8 +461,8 @@ public:
     void checkIfIsHit(float dt, std::vector<Bullet>& playersBullets, int& scores, int& enemyCount) {
         auto condition = [&](Bullet& bullet) {
             return bullet.getCurrentPosition().x >= currentPosition.x &&
-                bullet.getCurrentPosition().x <= currentPosition.x + size &&
-                bullet.getCurrentPosition().y <= currentPosition.y + size &&
+                bullet.getCurrentPosition().x <= currentPosition.x + 16 &&
+                bullet.getCurrentPosition().y <= currentPosition.y + 16 &&
                 bullet.getCurrentPosition().y >= currentPosition.y;
             };
 
