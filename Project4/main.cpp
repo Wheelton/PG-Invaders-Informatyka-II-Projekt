@@ -82,11 +82,11 @@ void runGame(
 		{
 			if (!enemy.getIsDead())
 			{
-				enemy.update(dtEnemy, player.bullets, scores, enemyCount);
+				enemy.update(dtEnemy, player.bullets, scores, enemyCount, window);
 				for (auto& bullet : enemy.bullets) {
 					bullet.draw(window);
 				}
-				player.checkIfIsHit(enemy.bullets);
+				player.checkIfIsHit(enemy.bullets,window);
 				enemy.draw(window);
 			}
 		}

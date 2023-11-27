@@ -235,12 +235,13 @@ public:
     void die() {
         isHit = true;
     }
-    void checkIfIsHit(std::vector<Bullet>& enemyBullets) {
+    void checkIfIsHit(std::vector<Bullet>& enemyBullets, sf::RenderWindow& window) {
         auto condition = [&](Bullet& bullet) {
             return bullet.getCurrentPosition().x >= currentPosition.x &&
                 bullet.getCurrentPosition().x <= currentPosition.x + 32 &&
                 bullet.getCurrentPosition().y <= currentPosition.y + 64 &&
-                bullet.getCurrentPosition().y >= currentPosition.y;
+                bullet.getCurrentPosition().y >= currentPosition.y ||
+                bullet.getCurrentPosition().y == window.getSize().y;
             };
 
         for (auto& bullet : enemyBullets)
@@ -450,20 +451,21 @@ public:
         textureSwitcher = 0;
         stopMoving();
     }
-    void update(float dt, std::vector<Bullet>& playersBullets, int& scores, int& enemyCount) {
-        checkIfIsHit(dt, playersBullets, scores, enemyCount);
+    void update(float dt, std::vector<Bullet>& playersBullets, int& scores, int& enemyCount, sf::RenderWindow& window) {
+        checkIfIsHit(dt, playersBullets, scores, enemyCount, window);
         fire();
         for (auto& bullet : bullets) {
             bullet.update(dt);
         }
         bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());
     }
-    void checkIfIsHit(float dt, std::vector<Bullet>& playersBullets, int& scores, int& enemyCount) {
+    void checkIfIsHit(float dt, std::vector<Bullet>& playersBullets, int& scores, int& enemyCount, sf::RenderWindow& window) {
         auto condition = [&](Bullet& bullet) {
             return bullet.getCurrentPosition().x >= currentPosition.x &&
                 bullet.getCurrentPosition().x <= currentPosition.x + 16 &&
                 bullet.getCurrentPosition().y <= currentPosition.y + 16 &&
-                bullet.getCurrentPosition().y >= currentPosition.y;
+                bullet.getCurrentPosition().y >= currentPosition.y ||
+                bullet.getCurrentPosition().y == 0;
             };
 
         for (auto& bullet : playersBullets)

@@ -32,12 +32,22 @@ private:
 public:
 	void draw(sf::RenderWindow& window) override {
 		sf::Vector2f windowSize = sf::Vector2f(window.getSize().x/2, window.getSize().y);
-		sf::RectangleShape border(windowSize);
+		/*sf::RectangleShape border(windowSize);
 		border.setFillColor(bgColor);
 		border.setOutlineColor(borderColor);
 		border.setOutlineThickness(borderThickness);
 		border.setPosition(windowSize.x - windowSize.x * 0.5, 0);
-		window.draw(border);
+		window.draw(border);*/
+		sf::Image bgImage;
+		if (!bgImage.loadFromFile("resources/Background-changed.png"))
+			std::cerr << "Error! Failed to load background image!";
+		sf::Sprite bgSprite;
+		sf::Texture bgTexture;
+		bgTexture.loadFromImage(bgImage);
+		bgSprite.setTexture(bgTexture);
+		bgSprite.setPosition(windowSize.x - windowSize.x * 0.5, 0);
+		bgSprite.setScale(sf::Vector2f(3.65f, 3.65f));
+		window.draw(bgSprite);
 	}
 	Borders(float borderThickness, sf::Color borderColor) :
 		 borderThickness(borderThickness), borderColor(borderColor) {
