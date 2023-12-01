@@ -1,4 +1,5 @@
-﻿#include <SFML/Graphics.hpp>
+﻿#pragma once
+#include <SFML/Graphics.hpp>
 #include <iostream>
 #include "HUD.h"
 #include <random>
@@ -96,6 +97,7 @@ private:
     sf::Image textureWLeft1;
     sf::Image textureWLeft2;
     sf::Image textureFiring;
+    std::string playerName = "Default";
 public:
     std::vector<Bullet> bullets;
     Player(float size, float speedMultiplier, sf::RenderWindow& window, Borders& border) :
@@ -125,6 +127,9 @@ public:
         playerSprite.setPosition(currentPosition);
         window.draw(playerSprite);
     }
+    void resetIsHit() {
+        isHit = false;
+    }
     void resetPosition(sf::RenderWindow& window) {
         currentPosition = sf::Vector2f((window.getSize().x / 2) - int(size), window.getSize().y * 0.9);
     }
@@ -144,6 +149,10 @@ public:
         bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());
 
     }
+    void setPlayerName(std::string newPlayerName) {
+        playerName = newPlayerName;
+    }
+    std::string getPlayerName() { return playerName; }
     void updateTexture() {
         /*std::cout << "Direction: " << direction << ", isIdle: " << isIdle << ", isMovingLeft: " << isMovingLeft << ", isMovingRight: " << isMovingRight;
         std::cout << ", isFiring: " << isFiring << "\n";*/
@@ -249,12 +258,13 @@ public:
             if (condition(bullet))
             {
                 die();
-                std::cout << "Player is hit!\n";
+                //std::cout << "Player is hit!\n";
             }
         }
         enemyBullets.erase(std::remove_if(enemyBullets.begin(), enemyBullets.end(), condition), enemyBullets.end());
         
     }
+    bool getIsHit() { return isHit; }
 };
 class Enemy :public GameObject {
 private:
@@ -389,7 +399,7 @@ public:
             }
             else if (isMoving && isFiring)
             {
-                std::cout << "textureSwitcher: " << textureSwitcher << ", isMoving: " << isMoving << ", isHit: " << isHit << ", isFiring: " << isFiring << "\n";
+                //std::cout << "textureSwitcher: " << textureSwitcher << ", isMoving: " << isMoving << ", isHit: " << isHit << ", isFiring: " << isFiring << "\n";
                 enemyTexture.update(texture[enemyColorId][2][textureSwitcher]);
                 if (textureSwitcher == 2)
                 {
@@ -421,7 +431,7 @@ public:
             }
             else if (isMoving && isFiring)
             {
-                std::cout << "textureSwitcher: " << textureSwitcher << ", isMoving: " << isMoving << ", isHit: " << isHit << ", isFiring: " << isFiring << "\n";
+                //std::cout << "textureSwitcher: " << textureSwitcher << ", isMoving: " << isMoving << ", isHit: " << isHit << ", isFiring: " << isFiring << "\n";
                 enemyTexture.update(texture[enemyColorId][3][textureSwitcher]);
                 if (textureSwitcher == 2)
                 {
@@ -473,7 +483,7 @@ public:
             if (condition(bullet))
             {
                 die();
-                std::cout << "Hit!\n";
+                //std::cout << "Hit!\n";
                 scores += 10;
                 enemyCount>0 ? enemyCount--:NULL;
             }

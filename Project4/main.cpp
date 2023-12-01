@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include "Menu.h"
@@ -8,9 +12,62 @@ GAME STATES:
 0 - Menu otwarte
 1 - Opcja Graj wybrana, zacznij grę
 2 - Opcja Ustawienia wybrana, pokaż ustawienia
-3 - Opcja O grze wybrana, pokaż stronę o grze
+3 - Opcja O grze wybrana, pokaż stronę o grzes
 */
-unsigned short int gameState = 0;
+
+
+/*
+	TODO:
+	Dodać warunek końca gry, czyli gameover
+	Zapis stanu gry i odczyt
+	Zapis danych gry, czyli punkty, czas grania, nazwa gracza itd.
+*/
+class Game {
+public:
+	HUD& hud; 
+	sf::RenderWindow& window;
+	Timer& timer;
+	Player& player; 
+	bool& timerStarted; 
+	sf::Clock& playerTextureClock;
+	std::vector<Enemy>& enemyList; 
+	int& scores; float& elapsedPlayerTextureTime;
+	float& textureChangeInterval;
+	sf::Clock& enemyTextureClock; 
+	float& elapsedEnemyTextureTime; 
+	int& enemyCount;
+public:
+	Game(HUD& hud, sf::RenderWindow& window,
+		Timer& timer, Player& player, bool& timerStarted, sf::Clock& playerTextureClock,
+		std::vector<Enemy>& enemyList, int& scores, float& elapsedPlayerTextureTime, float& textureChangeInterval,
+		sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime, int& enemyCount) : hud(hud), window(window), timer(timer),
+		player(player), timerStarted(timerStarted),playerTextureClock(playerTextureClock), enemyList(enemyList),
+		scores(scores),elapsedPlayerTextureTime(elapsedPlayerTextureTime), textureChangeInterval(textureChangeInterval), 
+		enemyTextureClock(enemyTextureClock), elapsedEnemyTextureTime(elapsedEnemyTextureTime), enemyCount(enemyCount)
+	{}
+	void saveGame() {
+		FILE* fp;
+		std::string saveFilePath = "saves/" + player.getPlayerName() + ".dat";		
+		char* charBuffer = new char[saveFilePath.length() + 1];
+		std::strcpy(charBuffer, saveFilePath.c_str());
+		fp = fopen(charBuffer, "w+b");
+		fwrite(this, sizeof(Game), 1, fp);
+		std::cout << "Nowy zapis gry: " << saveFilePath<<"\n";
+		delete[] charBuffer;
+	}
+	void loadGame() {
+		FILE* fp;
+		std::string saveFilePath = "saves/" + player.getPlayerName() + ".dat";
+		char* charBuffer = new char[saveFilePath.length() + 1];
+		std::strcpy(charBuffer, saveFilePath.c_str());
+		fp = fopen(charBuffer, "w+b");
+		fread(this, sizeof(Game), 1, fp);
+		std::cout << "Pobrany zapis gry: " << saveFilePath << "\n";
+		delete[] charBuffer;
+	}
+};
+
+int gameState = 0;
 const static short int FIRE_COOLDOWN = 2;
 
 void showMainMenu(bool& timerStarted, Menu& menu, sf::RenderWindow& window) {
@@ -28,9 +85,6 @@ void generateEnemyList(
 		}
 	}
 }
-void gameOver() {
-
-}
 void runGame(
 	HUD& hud, sf::RenderWindow& window,
 	Timer& timer, Player& player, bool& timerStarted, sf::Clock& playerTextureClock,
@@ -41,13 +95,16 @@ void runGame(
 	if (!timerStarted)
 	{
 		player.resetBullets();
+		player.resetIsHit();
 		timer.resetTimer();
 		timerStarted = true;
 	}
-	if (enemyCount > 0)
+	if (player.getIsHit())
 	{
-
-
+		hud.drawEndGame(window, false); //false - przegrana
+	}
+	else if (enemyCount > 0)
+	{
 		timer.update();
 		hud.updateTimer();
 		hud.updateEnemyCounter(enemyCount);
@@ -93,14 +150,14 @@ void runGame(
 		player.update(dtPlayer);
 		hud.updateScores(scores);//Odśwież punkty
 		player.draw(window); //Rysuj gracza
+	} else {
+		hud.drawEndGame(window, true); //true - wygrana
 	}
 }
 
 void restartGame(
-	HUD& hud, bool& timerStarted, sf::RenderWindow& window, Timer& timer, Player& player, 
-	sf::Clock frameClock, std::vector<Enemy>& enemyList, Borders& border,
-	int& enemyAmount, int& scores, float& elapsedTime, float& textureChangeInterval,
-	sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime, int gameState
+	HUD& hud, bool& timerStarted, sf::RenderWindow& window, Player& player, std::vector<Enemy>& enemyList, Borders& border,
+	int& enemyAmount, int& scores, int gameState
 	) {
 	enemyList.clear();
 	hud.resetScores(scores);
@@ -113,9 +170,8 @@ void restartGame(
 	player.stopMoving();
 	player.resetPosition(window);
 	player.resetBullets();
-	runGame(hud, window, timer, player, timerStarted, frameClock, enemyList, scores, elapsedTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, enemyAmount);
+	//runGame(hud, window, timer, player, timerStarted, frameClock, enemyList, scores, elapsedTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, enemyAmount);
 }
-
 
 int main()
 {
@@ -151,13 +207,17 @@ int main()
 	LeftContent leftContent(border, window);
 	HUD hud(border, leftContent, rightContent);
 	
-	
 	window.setFramerateLimit(60);
 	Menu menu(window.getSize().x, window.getSize().y, gameDifficulty);
-	while (window.isOpen())
+
+	Game game(hud, window, timer, player, timerStarted,
+		playerTextureClock, enemyList, scores, elapsedPlayerTextureTime,
+		textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, enemyCounter);
+
+	while (game.window.isOpen())
 	{
 		sf::Event event;
-		while (window.pollEvent(event))
+		while (game.window.pollEvent(event))
 		{
 			if (event.type == sf::Event::Closed)
 				window.close();
@@ -200,9 +260,8 @@ int main()
 					{
 						gameState = 0;
 						enemyCounter = enemyAmountBasedOnDifficulty[gameDifficulty];
-						restartGame(hud, timerStarted, window, timer, 
-							player, playerTextureClock, enemyList, border, enemyCounter,
-							scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, gameState);
+						restartGame(hud, timerStarted, window, player, enemyList,
+							border, enemyCounter, scores, gameState);
 						//std::cout << "Powrót do meni!\n";
 					}
 					if (gameState == 1)
@@ -211,9 +270,8 @@ int main()
 						{
 							//std::cout << "Restart!\n";
 							enemyCounter = enemyAmountBasedOnDifficulty[gameDifficulty];
-							restartGame(hud, timerStarted, window, timer,
-								player, playerTextureClock, enemyList, border, enemyCounter,
-								scores, elapsedPlayerTextureTime, textureChangeInterval, enemyTextureClock, elapsedEnemyTextureTime, gameState);
+							restartGame(hud, timerStarted, window, player, enemyList,
+								border, enemyCounter, scores, gameState);
 						}
 						else if (event.key.code == sf::Keyboard::Left && !player.isMoving()) {
 							//std::cout << "Idź w lewo!\n";
@@ -227,7 +285,18 @@ int main()
 							playerFireCooldown.restart();
 							//std::cout << "Strzelaj!\n";
 							player.fire();
+						} 
+						else if (event.key.code == sf::Keyboard::S)
+						{
+							std::cout << "Zapis gry!\n";
+							game.saveGame();
 						}
+						else if (event.key.code == sf::Keyboard::L)
+						{
+							std::cout << "Ładowanie gry!\n";
+							game.loadGame();
+						}
+
 					}
 					if (gameState == 2)
 					{

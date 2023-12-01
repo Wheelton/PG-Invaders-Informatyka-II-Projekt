@@ -196,6 +196,7 @@ public:
 		enemyCounter = enemyCount;
 	}
 	int getEnemyCount() { return enemyCounter; }
+	sf::Font getFont() { return font; }
 };
 class HUD:public HudElement {
 private:
@@ -227,4 +228,28 @@ public:
 		rightContent.resetEnemyCounter(enemyCount);
 	}
 	int getEnemyCount() { return rightContent.getEnemyCount(); }
+	void drawEndGame(sf::RenderWindow& window, bool playerIsWinner) {
+		sf::Text winningText;
+		sf::Font font;
+		font.loadFromFile("fonts/Arimo-Regular.ttf");
+		winningText.setFont(font);
+		winningText.setCharacterSize(30);
+		float textPositionX;
+		if (playerIsWinner)
+		{
+			winningText.setFillColor(sf::Color::Green);
+			winningText.setString(L"Wygrałeś!");
+			textPositionX = window.getSize().x / 2 - 50;
+		}
+		else
+		{
+			winningText.setFillColor(sf::Color::Red);
+			winningText.setString(L"Przegrałeś! Spróbuj ponownie...");
+			textPositionX = window.getSize().x / 3;
+		}
+		winningText.setPosition(sf::Vector2f(textPositionX, window.getSize().y/2));
+		leftContent.draw(window);
+		rightContent.draw(window);
+		window.draw(winningText);
+	}
 };
