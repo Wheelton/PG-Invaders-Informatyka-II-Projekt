@@ -10,6 +10,12 @@ class GameObject {
 public:
     virtual void draw(sf::RenderWindow& window) = 0;
 };
+/*
+    Klasa Bullet - klasa pocisku gracza bądź wroga w zależności od parametrów.
+    Gracz strzela zółtymi czwórkami i piątkami - dobrymi ocenami.
+    Wrogowie strzelają jedynkami i dwójkami w zależności od ich koloru.
+    Oceny - wagi pocisku.
+*/
 class Bullet : public GameObject {
 private:
     sf::Vector2f position;
@@ -25,20 +31,24 @@ public:
     Bullet(sf::Vector2f position, float size, float speed, bool fireDirection, sf::Color bulletColor) :
         position(position), size(size), speed(speed), alive(true), fireDirection(fireDirection), bulletColor(bulletColor)
     {}
-   
     void draw(sf::RenderWindow& window) override {
         sf::Font font;
         if (!font.loadFromFile("fonts/Arimo-Regular.ttf")) {
             std::cerr << "Error loading font";
         }
+        //Random mt19937
         std::mt19937 r{ static_cast<std::mt19937::result_type>(
         std::chrono::steady_clock::now().time_since_epoch().count()
         ) };
+        //Zakres randomowania wagi pocisku dla gracza
         std::uniform_int_distribution<int> playerBUlletWeightRange{ 4,5 };
+        //Zakres randomowania wagi pocisku dla wrogów
         std::uniform_int_distribution<int> enemyBUlletWeightRange{ 1,2 };
+        //Jeżeli waga jeszcze nie ustawiona 
         if (!weightIsSet)
         {
-            weightIsSet = true;
+            weightIsSet = true;//Teraz już tak
+            //W zależności od kierunku strzału, randomuj wagę
             fireDirection ? weight = (int)playerBUlletWeightRange(r) : weight = (int)enemyBUlletWeightRange(r);
         }
         bulletObject = sf::Text(std::to_string(weight), font, size);
@@ -48,8 +58,8 @@ public:
         
     }
 
-    void update(float dt) {
-        
+    void update(float dt, sf::RenderWindow& window) {
+        //W zależności od kierunku strzału odśwież pozycję w osi Y
         fireDirection ? position.y -= speed * dt: position.y -= speed * dt * -1;
         if (fireDirection) //Leci w górę
         {
@@ -58,7 +68,7 @@ public:
             }
         }
         else if (!fireDirection) {//Leci w dół
-            if (position.y - size < 0) {
+            if (position.y - size > window.getSize().y) {
                 alive = false;
             }
         }
@@ -67,7 +77,19 @@ public:
     float getSize() { return size; }
     bool isAlive() { return alive; }
     sf::Vector2f getCurrentPosition() { return position; }
+    bool getFireDirection() { return fireDirection; }
+    sf::Color getColor() { return bulletColor; }
+    void setColor(sf::Color color) { bulletColor = color; }
+    void setCurrentPosition(sf::Vector2f currentPosition) { this->position = currentPosition; }
 };
+
+
+/*
+    Klasa Player - gracz.
+    Gracz - student. 
+    Umie poruszać się tylko w dwóch kierunkach - lewo i prawo, bo to nie tak łatwo unikać złych ocen :D
+    No i strzela oczywiście, czasami dobrze (nie jest to mechanika, trzeba po prostu trafić we wrogów).
+*/
 class Player : public GameObject {
 private:
     float leftBorder;
@@ -89,17 +111,17 @@ private:
     bool isFiring = false;
     sf::Sprite playerSprite;
     sf::Texture playerTexture;
-    sf::Image textureIdle;
-    sf::Image textureWRight0;
+    sf::Image textureIdle; //Tekstura postoju w miejscu, bazowa
+    sf::Image textureWRight0;//Tekstury ruchu w prawo
     sf::Image textureWRight1;
     sf::Image textureWRight2;
-    sf::Image textureWLeft0;
+    sf::Image textureWLeft0;//Tekstury ruchu w lewo
     sf::Image textureWLeft1;
     sf::Image textureWLeft2;
-    sf::Image textureFiring;
+    sf::Image textureFiring;//Tekstura strzelania
     std::string playerName = "Default";
 public:
-    std::vector<Bullet> bullets;
+    std::vector<Bullet> bullets;//Lista pocisków gracza
     Player(float size, float speedMultiplier, sf::RenderWindow& window, Borders& border) :
         size(size), speedMultiplier(speedMultiplier),
         currentPosition(sf::Vector2f((window.getSize().x / 2) - int(size), window.getSize().y * 0.9)),
@@ -108,6 +130,7 @@ public:
         velocity(0),
         moving(false)
     {
+        //Tu się ładują tekstury gracza z plików w folderze resources
         if (!textureIdle.loadFromFile("resources/Student/Student_D_Idle.png") ||
             !textureWRight0.loadFromFile("resources/Student/Student_D_Right_0.png") ||
             !textureWRight1.loadFromFile("resources/Student/Student_D_Right_1.png") ||
@@ -119,6 +142,7 @@ public:
         {
             std::cerr << "Error! Failed to load player textures!\n";
         }
+        //Ładuj podstawową teksturę do rzeczywistej zmiennej tekstury (tekstura w tej chwili)
         playerTexture.loadFromImage(textureIdle);
     }
 
@@ -133,7 +157,7 @@ public:
     void resetPosition(sf::RenderWindow& window) {
         currentPosition = sf::Vector2f((window.getSize().x / 2) - int(size), window.getSize().y * 0.9);
     }
-    void update(float dt) {
+    void update(float dt, sf::RenderWindow& window) {
         
         float newX = currentPosition.x + velocity * dt * 0.7;
         
@@ -144,15 +168,13 @@ public:
             velocity = 0;
         }
         for (auto& bullet : bullets) {
-            bullet.update(dt);
+            bullet.update(dt, window);
         }
         bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());
 
     }
-    void setPlayerName(std::string newPlayerName) {
-        playerName = newPlayerName;
-    }
     std::string getPlayerName() { return playerName; }
+    void setPlayerName(std::string playerName) { this->playerName = playerName; }
     void updateTexture() {
         /*std::cout << "Direction: " << direction << ", isIdle: " << isIdle << ", isMovingLeft: " << isMovingLeft << ", isMovingRight: " << isMovingRight;
         std::cout << ", isFiring: " << isFiring << "\n";*/
@@ -244,6 +266,18 @@ public:
     void die() {
         isHit = true;
     }
+    int getCurrentBulletsAmount() { return bullets.size(); }
+
+    sf::Vector2f* getCurrentBulletsXY() {
+        int bulletsAmount = getCurrentBulletsAmount();
+        sf::Vector2f* xyArray = new sf::Vector2f[bulletsAmount];
+        for (int i = 0;  i < bulletsAmount;  i++)
+        {
+            xyArray[i] = bullets[i].getCurrentPosition();
+        }
+        return xyArray;
+    }
+
     void checkIfIsHit(std::vector<Bullet>& enemyBullets, sf::RenderWindow& window) {
         auto condition = [&](Bullet& bullet) {
             return bullet.getCurrentPosition().x >= currentPosition.x &&
@@ -264,6 +298,8 @@ public:
         enemyBullets.erase(std::remove_if(enemyBullets.begin(), enemyBullets.end(), condition), enemyBullets.end());
         
     }
+    sf::Vector2f getCurrentPosition() { return currentPosition; }
+    void setCurrentPosition(sf::Vector2f currentPosition) { this->currentPosition = currentPosition; }
     bool getIsHit() { return isHit; }
 };
 class Enemy :public GameObject {
@@ -276,7 +312,7 @@ private:
     sf::Vector2f currentPosition;
     sf::Vector2f startingPosition;
     float velocity;
-    const float MAX_VELOCITY = 300;
+    float MAX_VELOCITY = 300;
     float dx = 300;
     int amountOfEnemies;
     int xIndex;
@@ -292,9 +328,10 @@ private:
     sf::Image texture[3][6][3];
     int enemyColorId;
 public:
+    int id;
     std::vector<Bullet> bullets;
-    Enemy(float size, float speedMultiplier, sf::RenderWindow& window, Borders& border, int amountOfEnemies, int xIndex, int yIndex) :
-        size(size), speedMultiplier(speedMultiplier),
+    Enemy(int id,float size, float speedMultiplier, sf::RenderWindow& window, Borders& border, int amountOfEnemies, int xIndex, int yIndex) :
+        id(id), size(size), speedMultiplier(speedMultiplier),
         currentPosition(sf::Vector2f(rightBorder * 0.9 - (int(size) * xIndex * amountOfEnemies * 0.2), window.getSize().y * 0.1 + (yIndex * int(size) * 4))),
         leftBorder(window.getSize().x * 0.25 + border.getBorderThickness()),
         rightBorder(window.getSize().x * 0.75 - border.getBorderThickness() - size),
@@ -338,6 +375,8 @@ public:
         enemySprite.setPosition(currentPosition);
         window.draw(enemySprite);
     }
+    sf::Vector2f getCurrentPosition() { return currentPosition; }
+    void setCurrentPosition(sf::Vector2f currentPosition) { this->currentPosition = currentPosition; }
     bool getIsMoving() { return isMoving; }
     bool getIsHit() { return isHit; }
     bool getIsDead() { return isDead; }
@@ -465,7 +504,7 @@ public:
         checkIfIsHit(dt, playersBullets, scores, enemyCount, window);
         fire();
         for (auto& bullet : bullets) {
-            bullet.update(dt);
+            bullet.update(dt, window);
         }
         bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());
     }

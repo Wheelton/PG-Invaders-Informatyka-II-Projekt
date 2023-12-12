@@ -39,14 +39,15 @@ public:
 		border.setPosition(windowSize.x - windowSize.x * 0.5, 0);
 		window.draw(border);*/
 		sf::Image bgImage;
-		if (!bgImage.loadFromFile("resources/Background-changed.png"))
+		if (!bgImage.loadFromFile("resources/Background_v2.jpeg"))
 			std::cerr << "Error! Failed to load background image!";
 		sf::Sprite bgSprite;
 		sf::Texture bgTexture;
 		bgTexture.loadFromImage(bgImage);
 		bgSprite.setTexture(bgTexture);
 		bgSprite.setPosition(windowSize.x - windowSize.x * 0.5, 0);
-		bgSprite.setScale(sf::Vector2f(3.65f, 3.65f));
+		//bgSprite.setScale(sf::Vector2f(3.65f, 3.65f));// dla Background-changed.png
+		bgSprite.setScale(sf::Vector2f(1.25f, 1.5f)); // dla Background_v2.jpeg
 		window.draw(bgSprite);
 	}
 	Borders(float borderThickness, sf::Color borderColor) :
@@ -83,31 +84,31 @@ public:
 		text[0].setCharacterSize(fontSize);
 		text[0].setFillColor(sf::Color::White);
 		text[0].setString(L"← - idź w lewo");
-		text[0].setPosition(sf::Vector2f(width / 2 - 150, height / 2 * modifier + spaceBetweenLines));
+		text[0].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
 		text[1].setFont(font);
 		text[1].setCharacterSize(fontSize);
 		text[1].setFillColor(sf::Color::White);
 		text[1].setString(L"→ - idź w prawo");
-		text[1].setPosition(sf::Vector2f(width / 2 - 150, height / 2 * modifier + spaceBetweenLines));
+		text[1].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
 		text[2].setFont(font);
 		text[2].setCharacterSize(fontSize);
 		text[2].setFillColor(sf::Color::White);
 		text[2].setString("Spacja - strzelaj");
-		text[2].setPosition(sf::Vector2f(width / 2 - 150, height / 2 * modifier + spaceBetweenLines));
+		text[2].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
 		text[3].setFont(font);
 		text[3].setCharacterSize(fontSize);
 		text[3].setFillColor(sf::Color::White);
 		text[3].setString("R - restart gry");
-		text[3].setPosition(sf::Vector2f(width / 2 - 150, height / 2 * modifier + spaceBetweenLines));
+		text[3].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
 		text[4].setFont(font);
 		text[4].setCharacterSize(fontSize);
 		text[4].setFillColor(sf::Color::White);
 		text[4].setString(L"Backspace - wróć do meni");
-		text[4].setPosition(sf::Vector2f(width / 2 - 150, height / 2 * modifier + spaceBetweenLines));
+		text[4].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		
 
 	}
@@ -200,10 +201,10 @@ public:
 };
 class HUD:public HudElement {
 private:
-	Borders& border;
 	LeftContent& leftContent;
 	RightContent& rightContent;
 public:
+	Borders& border;
 	HUD(Borders& border, LeftContent& leftContent,RightContent& rightContent):
 		border(border),leftContent(leftContent),rightContent(rightContent){}
 	void draw(sf::RenderWindow& window) override {
