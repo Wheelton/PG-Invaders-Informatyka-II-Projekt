@@ -12,17 +12,6 @@
 #include <filesystem>
 
 
-/*
-	TODO:
-	Dodać warunek końca gry, czyli gameover DONE
-	Zapis stanu gry i odczyt ZMIENIONY CEL -> według autora nie pasuje do gry
-	Zamienić tło DONE
-	Dodać system usuwania wrogów i ich pocisków (dynamicznie usuwać elementy z wektorów) DONE
-	Dodać kilka nowych pomocniczych napisów
-	Dodać szybkie podmeni do wpisywania nazwy gracza przed wejściem do gry
-	Zapis danych gry, czyli punkty, czas grania, nazwa gracza itd.
-*/
-
 
 
 int main()
