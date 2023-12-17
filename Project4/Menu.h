@@ -19,6 +19,11 @@ private:
 	sf::Font font;
 
 	sf::Text menu[MENU_ITEMS_COUNT + SETTINGS_MENU_ITEMS_COUNT + ABOUT_MENU_ITEMS_COUNT];
+
+	std::vector<sf::Text> tableOfRecords;
+
+	std::vector<float> initialRecordPositions;
+
 public:
 	Menu(float width, float height, int gameDifficulty) : selectedOption(0), gameDifficulty(gameDifficulty) {
 		if (!font.loadFromFile("fonts/Arimo-Regular.ttf")) {
@@ -44,7 +49,7 @@ public:
 		modifier = modifier + spaceBetweenLines;
 		menu[3].setFont(font);
 		menu[3].setFillColor(sf::Color::White);
-		menu[3].setString(L"Tablica rekordów");
+		menu[3].setString(L"Tabela rekordów");
 		menu[3].setPosition(sf::Vector2f(width / 2 - 50, height / 4 * modifier + spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
 		menu[4].setFont(font);
@@ -69,14 +74,67 @@ public:
 
 		playerNameInputField.setFont(font);
 		playerNameInputField.setFillColor(sf::Color::White);
-		playerNameInputField.setPosition(sf::Vector2f(width / 2 - 200, height / 4 * 1.3));
+		playerNameInputField.setPosition(sf::Vector2f(width / 3 - 400, height / 4 * 1.3));
 		playerNameInputField.setString(L"Podaj nazwę gracza:\n");
+		playerNameInputField.setCharacterSize(20);
 
 		helpText.setFont(font);
 		helpText.setFillColor(sf::Color::White);
 		helpText.setPosition(sf::Vector2f(width / 2 - 200, height / 4 * 0.8));
 		helpText.setString(L"Escape - powrót");
 
+	}
+	void updateTableOfRecords(sf::RenderWindow& window, std::vector<std::string> records) {
+		float width = window.getSize().x * 0.5 - 200;
+		float height = window.getSize().y;
+
+		float spaceBetweenLines = 0.2;
+		float modifier = 0.8;
+		int fontSize = 20;
+		tableOfRecords.clear();
+		initialRecordPositions.clear();
+		for (auto& record:records)
+		{
+			sf::Text textRecord;
+			//Elementy info
+			textRecord.setFont(font);
+			textRecord.setCharacterSize(fontSize);
+			textRecord.setFillColor(sf::Color::White);
+			textRecord.setString(record);
+			textRecord.setPosition(sf::Vector2f(width, height / 3 * modifier + spaceBetweenLines));
+			initialRecordPositions.push_back(height / 3 * modifier + spaceBetweenLines);
+			modifier = modifier + spaceBetweenLines;
+			tableOfRecords.push_back(textRecord);
+		}
+	}
+	void updateTableOfRecordsOffset(sf::RenderWindow& window, float offset) {
+		auto record = tableOfRecords.begin();
+		auto initYPosition = initialRecordPositions.begin();
+
+
+		if (tableOfRecords.size()==initialRecordPositions.size())
+		{
+			while (record != tableOfRecords.end() && initYPosition != initialRecordPositions.end()) {
+				sf::Text& text = *record;
+				float initialY = *initYPosition;
+
+				float newYPos = initialY + offset;
+			
+				std::cout << newYPos << std::endl;
+				text.setPosition(sf::Vector2f(text.getPosition().x, newYPos));
+				++record;
+				++initYPosition;
+			}
+		}
+		else
+		{
+			std::vector<std::string> stringRecords;
+			for (auto& record : tableOfRecords)
+			{
+				stringRecords.push_back(record.getString());
+			}
+			updateTableOfRecords(window, stringRecords);
+		}
 	}
 	void draw(sf::RenderWindow& window) {
 		for (int i = 0; i < MENU_ITEMS_COUNT; i++)
@@ -105,8 +163,26 @@ public:
 		window.draw(playerNameInputField);
 
 	}
+	void drawTableOfRecords(sf::RenderWindow& window) {
+		for (auto& record : tableOfRecords)
+		{
+			window.draw(record);
+		}
+	}
 	void updatePlayerNameInputField(std::string newValue) {
-		std::wstring inputText = L"Podaj nazwę gracza\n(bez polskich znaków, 2-10 symboli):\n";
+		std::wstring inputText =
+			L"Witaj w świecie 'PG Invaders'!\n"
+			L"Jako student, który poświęcił wiele czasu na naukę aż do późnych godzin nocnych, znalazłeś się na uczelni,\nby przysiąść nad książkami i przygotować się do zbliżającej się sesji.\n"
+			L"Jednak w nocy, gdy wszystko wydawało się spokojne, na niebie pojawiły się złowieszcze chmury.\n"
+			L"Nagle, zza zakamarków uczelnianych korytarzy, wyłoniło się zło w postaci groźnych ocen, które zagrażały studentom.\n"
+			L"Twoje ulubione miejsce nauki stało się polem bitwy, a Twoim celem jest obrona uczelni przed tym niebezpieczeństwem.\n"
+			L"Poruszaj się sprawnie w lewo i w prawo, używając strzałek, aby unikać zbliżających się złych ocen.\n"
+			L"Twoją bronią są dobre oceny, którymi musisz celnie strzelać w kierunku wrogów, aby je zniszczyć.\n"
+			L"Pamiętaj jednak, że złe oceny również stanowią zagrożenie – jeśli nie unikniesz ich ataków,\nmoże to zaszkodzić Twoim szansom na zdanie sesji!\n"
+			L"Czy zdołasz obronić uczelnię, utrzymać się w grze i osiągnąć najlepszy wynik? To już zależy od Ciebie.\n"
+			L"Powodzenia, studente! Wstań do walki i udowodnij, że dobre oceny są najskuteczniejszą bronią przeciwko złu sesyjnemu w 'PG Invaders'!\n"
+			L"\tŻeby rozpocząć, podaj dane studenta (imię lub indeks) i wciśnij ENTER (bez polskich znaków, 2 - 10 symboli):\n";
+
 		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 		std::wstring wideString = converter.from_bytes(newValue);
 		playerNameInputField.setString(inputText + wideString);

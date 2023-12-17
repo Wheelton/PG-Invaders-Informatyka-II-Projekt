@@ -6,38 +6,13 @@
 #include "GameObjects.h"
 #include "Game.h"
 #include "HUD.h"
-#include <filesystem>
+#include <windows.h>
+
+
+
+
 class Game {
 public:
-	HUD& hud;
-	Menu& menu;
-	sf::RenderWindow& window;
-	int* enemyAmountBasedOnDifficulty;
-	int& gameDifficulty;
-	Timer& timer;
-	Player& player;
-	bool& timerStarted;
-	sf::Clock& playerTextureClock;
-	std::vector<Enemy>& enemyList;
-	int& scores; float& elapsedPlayerTextureTime;
-	float& textureChangeInterval;
-	sf::Clock& enemyTextureClock;
-	float& elapsedEnemyTextureTime;
-	int& enemyCounter;
-	std::string playerName;
-	sf::Clock playerFireCooldown;
-	float fireCooldownMultiplier = 1.0;
-	Game(HUD& hud, Menu& menu, sf::RenderWindow& window, int* enemyAmountBasedOnDifficulty, int& gameDifficulty,
-		Timer& timer, Player& player, bool& timerStarted, sf::Clock& playerTextureClock,
-		std::vector<Enemy>& enemyList, int& scores, float& elapsedPlayerTextureTime, float& textureChangeInterval,
-		sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime, int& enemyCounter)
-		:
-		hud(hud), menu(menu), window(window), enemyAmountBasedOnDifficulty(enemyAmountBasedOnDifficulty), gameDifficulty(gameDifficulty),
-		timer(timer),
-		player(player), timerStarted(timerStarted), playerTextureClock(playerTextureClock), enemyList(enemyList),
-		scores(scores), elapsedPlayerTextureTime(elapsedPlayerTextureTime), textureChangeInterval(textureChangeInterval),
-		enemyTextureClock(enemyTextureClock), elapsedEnemyTextureTime(elapsedEnemyTextureTime), enemyCounter(enemyCounter)
-	{}
 	//Struktura dla zapisu/odczytu danych gry
 	typedef struct G {
 		//sf::Vector2f playerPosition;
@@ -82,7 +57,6 @@ public:
 			}*/
 			return os;
 		}
-
 		//Przeciążenie operatora odczytywania z pliku do zmiennej
 		friend std::istream& operator>>(std::istream& is, G& g) {
 			//is >> g.playerPosition.x >> g.playerPosition.y;
@@ -123,72 +97,98 @@ public:
 		}
 
 	};
-	//Zapisz dane gry
-	int saveGame() {
+	std::map<std::string, Game::G> latestGames;
 
-		std::string saveFilePath = "saves/" + player.getPlayerName() + ".dat";
-		std::ofstream outputFile(saveFilePath);
-		int playerBulletsAmount = player.getCurrentBulletsAmount();
-		sf::Vector2f* arrayPlayerBulletsPosition = player.getCurrentBulletsXY();
-		int enemyAmount = enemyList.size();
-		sf::Vector2f* arrayEnemyPositions = new sf::Vector2f[enemyAmount];
-		int* arrayEnemyBulletsAmounts = new int[enemyAmount];
-		for (int i = 0; i < enemyAmount; i++)
+
+	HUD& hud;
+	Menu& menu;
+	sf::RenderWindow& window;
+	int* enemyAmountBasedOnDifficulty;
+	int& gameDifficulty;
+	Timer& timer;
+	Player& player;
+	bool& timerStarted;
+	sf::Clock& playerTextureClock;
+	std::vector<Enemy>& enemyList;
+	int& scores; float& elapsedPlayerTextureTime;
+	float& textureChangeInterval;
+	sf::Clock& enemyTextureClock;
+	float& elapsedEnemyTextureTime;
+	int& enemyCounter;
+	std::string playerName;
+	sf::Clock playerFireCooldown;
+	std::vector<Game::G> loadedGames;
+	float fireCooldownMultiplier = 1.0;
+	float offset = 0;
+	bool gameIsSaved = false;
+	Game(HUD& hud, Menu& menu, sf::RenderWindow& window, int* enemyAmountBasedOnDifficulty, int& gameDifficulty,
+		Timer& timer, Player& player, bool& timerStarted, sf::Clock& playerTextureClock,
+		std::vector<Enemy>& enemyList, int& scores, float& elapsedPlayerTextureTime, float& textureChangeInterval,
+		sf::Clock& enemyTextureClock, float& elapsedEnemyTextureTime, int& enemyCounter)
+		:
+		hud(hud), menu(menu), window(window), enemyAmountBasedOnDifficulty(enemyAmountBasedOnDifficulty), gameDifficulty(gameDifficulty),
+		timer(timer),
+		player(player), timerStarted(timerStarted), playerTextureClock(playerTextureClock), enemyList(enemyList),
+		scores(scores), elapsedPlayerTextureTime(elapsedPlayerTextureTime), textureChangeInterval(textureChangeInterval),
+		enemyTextureClock(enemyTextureClock), elapsedEnemyTextureTime(elapsedEnemyTextureTime), enemyCounter(enemyCounter)
+	{
+		loadGame();
+		for (auto& game : loadedGames )
 		{
-			arrayEnemyPositions[i] = enemyList[i].getCurrentPosition();
-			arrayEnemyBulletsAmounts[i] = enemyList[i].bullets.size();
-			//std::cout << "enemy" << i << "(" << arrayEnemyPositions[i].x << "," << arrayEnemyPositions[i].y << ")\n";
+			latestGames[game.playerName] = game;
 		}
-		std::vector<std::vector<sf::Vector2f>> dynamicArrayEnemyBulletsPositions(enemyAmount);
-		for (int i = 0; i < enemyAmount; i++)
-		{
-			dynamicArrayEnemyBulletsPositions[i].resize(arrayEnemyBulletsAmounts[i]);
-			//std::cout << "enemy" << i << " bul.am. " << arrayEnemyBulletsAmounts[i] << std::endl;
-			for (int j = 0; j < arrayEnemyBulletsAmounts[i]; j++)
-			{
-				dynamicArrayEnemyBulletsPositions[i][j] = enemyList[i].bullets[j].getCurrentPosition();
-				//std::cout << "bul" << j << "(" << dynamicArrayEnemyBulletsPositions[i][j].x << "," << dynamicArrayEnemyBulletsPositions[i][j].y << ")\t";
+	}
+	
+	// Odczytaj dane gry
+	void loadGame() {
+		loadedGames.clear();
+		G loadedGame;
+		std::string saveFilePath = "saves/saves.dat";
+		std::ifstream inputFile(saveFilePath);
+		if (inputFile.is_open()) {
+			while (inputFile >> loadedGame) {
+				//std::cout << "Laduje: " << saveFilePath << "\n";
+				//std::cout << loadedGame.playerName << ": Punkty " << loadedGame.scores << ", Czas gry " << loadedGame.secondsPlayed << std::endl;
+				loadedGames.push_back(loadedGame);
 			}
-			//std::cout << "\n";
+			inputFile.close();
 		}
-		//G gameInstance{player.getCurrentPosition(), playerBulletsAmount,arrayPlayerBulletsPosition, arrayEnemyPositions, enemyAmount, scores, dynamicArrayEnemyBulletsPositions };
-		G gameInstance{ player.getPlayerName(), scores,timer.getCurrentSeconds() };
+		else {
+			std::cerr << "Problem z odczytywaniem pliku:" << saveFilePath << std::endl;
+		}
+	}
+
+	// Zapisz dane gry
+	int saveGame() {
+		std::string saveFilePath = "saves/saves.dat";
+		std::ofstream outputFile(saveFilePath);
+		G gameInstance{ player.getPlayerName(), scores, timer.getCurrentSeconds() };
+		// Odśwież rekord bieżącego gracza
+		latestGames[player.getPlayerName()] = gameInstance;
 		if (outputFile.is_open()) {
-			std::cout << "Nowy zapis gry: " << saveFilePath << "\n";
-			outputFile << gameInstance;
+			// Zapisuj ostatnie gry
+			for (const auto& pair : latestGames) {
+				const G& game = pair.second;
+				//std::cout << "Nowy zapis gry: " << saveFilePath << "\n";
+				outputFile << game;
+			}
+			gameIsSaved = true;
 			outputFile.close();
 		}
 		else {
 			std::cerr << "Problem z zapisywaniem pliku:" << saveFilePath << std::endl;
 			return 1;
 		}
+		return 0;
 	}
-	//Odczytaj dane gry
-	int loadGame() {
-		G loadedGameInstance;
-		std::string saveFilePath = "saves/" + player.getPlayerName() + ".dat";
-		std::ifstream inputFile(saveFilePath);
-		if (inputFile.is_open()) {
-			std::cout << "Laduje: " << saveFilePath << "\n";
-			inputFile >> loadedGameInstance;
-			inputFile.close();
-			//std::cout << loadedGameInstance.playerName << ": Scores " << loadedGameInstance.scores << ", Time played " << loadedGameInstance.secondsPlayed << std::endl;
-		}
-		else {
-			std::cerr << "Problem z odczytywaniem pliku:" << saveFilePath << std::endl;
-			return 1;
-		}
-
-	}
-
-
 	/*
 		GAME STATES:
 		0 - Menu otwarte
 		1 - Opcja Graj wybrana, zacznij grę
 		2 - Opcja Ustawienia wybrana, pokaż ustawienia
 		3 - Opcja O grze wybrana, pokaż stronę o grze
-		4 - Opcja podaj nazwę gracza
+		4 - Opcja Podaj nazwę gracza
+		5 - Opcja Tablica Rekordów
 	*/
 
 	int gameState = 0;
@@ -221,6 +221,15 @@ public:
 		}
 		return result;
 	}
+	void updateTableOfRecords() {
+		std::vector<std::string> stringRecords;
+		for (auto& game : loadedGames){
+			stringRecords.push_back(game.playerName + ":\tPunkty: " + std::to_string(game.scores) + ", Czas gry: " + std::to_string(game.secondsPlayed) + '\n');
+		}
+
+		menu.updateTableOfRecords(window, stringRecords);
+	}
+
 
 	/*
 	HUD& hud, sf::RenderWindow& window,
@@ -234,6 +243,7 @@ public:
 		//Gra tylko się zaczęła, zresetuj wszystko
 		if (!timerStarted)
 		{
+			gameIsSaved = false;
 			player.resetBullets();
 			player.resetIsHit();
 			timer.resetTimer();
@@ -305,8 +315,8 @@ public:
 			player.draw(window); //Rysuj gracza
 		}
 		else {
+			!gameIsSaved ? saveGame():NULL; //Zapisz dane gry wygranej jeżeli jeszcze nie zapisano
 			hud.drawEndGame(window, true); //true - wyświetl wygraną
-			saveGame(); //Zapisz dane gry wygranej
 		}
 	}
 	//Funkcja restart gry, odświeża wszystkie potrzebne zmienne
@@ -366,8 +376,11 @@ public:
 								gameState = 3;
 							}
 							else if (menu.getSelectedOption() == 3) {
-								std::cout << "Opcja Tablica rekordów wybrana!\n";
-
+								//std::cout << "Opcja Tablica rekordów wybrana!\n";
+								loadGame();
+								updateTableOfRecords();
+								offset = 0;
+								gameState = 5;
 							}
 							else if (menu.getSelectedOption() == 4) {
 								//std::cout << "Opcja Zamknij wybrana!\n";
@@ -393,7 +406,7 @@ public:
 							//Restart gry
 							if (event.key.code == sf::Keyboard::R)
 							{
-								std::cout << "Restart!\n";
+								//std::cout << "Restart!\n";
 								enemyCounter = enemyAmountBasedOnDifficulty[gameDifficulty];
 								restartGame(hud, timerStarted, window, player, enemyList,
 									hud.border, enemyCounter, scores, gameState);
@@ -417,13 +430,13 @@ public:
 							/*else if (event.key.code == sf::Keyboard::S)
 							{
 								std::cout << "Zapis gry!\n";
-								game.saveGame();
+								saveGame();
 							}
 							else if (event.key.code == sf::Keyboard::L)
 							{
 								std::cout << "Ładowanie gry!\n";
 
-								game.loadGame();
+								loadGame();
 							}*/
 
 						}
@@ -447,9 +460,22 @@ public:
 							if (event.key.code == sf::Keyboard::Enter && playerName.length() > 1)
 							{
 								player.setPlayerName(playerName);
+								hud.setPlayerNameLine(playerName);
 								gameState = 1; //Zmień stan gry na "GRAJ"
 								generateEnemyList(enemyList, window, hud.border, enemyCounter);
 							}
+						}
+						if (gameState == 5) {
+							if (event.key.code == sf::Keyboard::Up) {
+								offset -= 20.0f;
+								menu.updateTableOfRecordsOffset(window, offset);
+							}
+							else if (event.key.code == sf::Keyboard::Down) {
+								offset += 20.0f;
+								menu.updateTableOfRecordsOffset(window,offset);
+							}
+							
+
 						}
 
 					}
@@ -497,6 +523,10 @@ public:
 				menu.drawPlayerNameInputField(window);
 			}
 			//Rysuj podmeni
+			else if (gameState == 5)
+			{
+				menu.drawTableOfRecords(window);
+			}
 			else {
 				menu.drawSubMenu(window, gameState);
 			}

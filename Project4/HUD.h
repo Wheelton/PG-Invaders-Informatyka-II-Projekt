@@ -65,8 +65,9 @@ public:
 class LeftContent:public HudElement{
 private:
 	Borders border;
-	static const int LEFT_CONTENT_ITEMS_COUNT = 5;
+	static const int LEFT_CONTENT_ITEMS_COUNT = 6;
 	sf::Font font;
+	std::string playerName;
 	sf::Text text[LEFT_CONTENT_ITEMS_COUNT];
 public:
 	LeftContent(Borders border, sf::RenderWindow& window):border(border){
@@ -83,34 +84,46 @@ public:
 		text[0].setFont(font);
 		text[0].setCharacterSize(fontSize);
 		text[0].setFillColor(sf::Color::White);
-		text[0].setString(L"← - idź w lewo");
-		text[0].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
-		modifier = modifier + spaceBetweenLines;
+		std::string playerNameLine = "Nazwa gracza:\n" + playerName;
+		text[0].setString(playerNameLine);
+		text[0].setPosition(sf::Vector2f(width / 2 - 150, 35));
+
 		text[1].setFont(font);
 		text[1].setCharacterSize(fontSize);
 		text[1].setFillColor(sf::Color::White);
-		text[1].setString(L"→ - idź w prawo");
+		text[1].setString(L"← - idź w lewo");
 		text[1].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
 		text[2].setFont(font);
 		text[2].setCharacterSize(fontSize);
 		text[2].setFillColor(sf::Color::White);
-		text[2].setString("Spacja - strzelaj");
+		text[2].setString(L"→ - idź w prawo");
 		text[2].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
 		text[3].setFont(font);
 		text[3].setCharacterSize(fontSize);
 		text[3].setFillColor(sf::Color::White);
-		text[3].setString("R - restart gry");
+		text[3].setString("Spacja - strzelaj");
 		text[3].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		modifier = modifier + spaceBetweenLines;
 		text[4].setFont(font);
 		text[4].setCharacterSize(fontSize);
 		text[4].setFillColor(sf::Color::White);
-		text[4].setString(L"Backspace - wróć do meni");
+		text[4].setString("R - restart gry");
 		text[4].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
+		modifier = modifier + spaceBetweenLines;
+		text[5].setFont(font);
+		text[5].setCharacterSize(fontSize);
+		text[5].setFillColor(sf::Color::White);
+		text[5].setString(L"Backspace - wróć do meni");
+		text[5].setPosition(sf::Vector2f(width / 2 - 150, height / 3 * modifier + spaceBetweenLines));
 		
 
+	}
+	void setPlayerNameLineValue(std::string name) {
+		playerName = name;
+		std::string playerNameLine = "Nazwa gracza:\n" + playerName;
+		text[0].setString(playerNameLine);
 	}
 	void draw(sf::RenderWindow& window) override {
 		sf::RectangleShape leftContentBg(sf::Vector2f(window.getSize().x - (window.getSize().x * 0.75)-border.getBorderThickness(), window.getSize().y));
@@ -228,6 +241,9 @@ public:
 	void resetEnemyCounter(int& enemyCount) {
 		rightContent.resetEnemyCounter(enemyCount);
 	}
+	void setPlayerNameLine(std::string name) {
+		leftContent.setPlayerNameLineValue(name);
+	}
 	int getEnemyCount() { return rightContent.getEnemyCount(); }
 	void drawEndGame(sf::RenderWindow& window, bool playerIsWinner) {
 		sf::Text winningText;
@@ -239,13 +255,13 @@ public:
 		if (playerIsWinner)
 		{
 			winningText.setFillColor(sf::Color::Green);
-			winningText.setString(L"Wygrałeś!");
+			winningText.setString(L"Zdałeś sesję!");
 			textPositionX = window.getSize().x / 2 - 50;
 		}
 		else
 		{
 			winningText.setFillColor(sf::Color::Red);
-			winningText.setString(L"Przegrałeś! Spróbuj ponownie...");
+			winningText.setString(L"\t\tNie zdałeś sesji!\nWciśnij R dla kolejnej próby");
 			textPositionX = window.getSize().x / 3;
 		}
 		winningText.setPosition(sf::Vector2f(textPositionX, window.getSize().y/2));

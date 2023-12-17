@@ -523,7 +523,8 @@ public:
             {
                 die();
                 //std::cout << "Hit!\n";
-                scores += 10;
+
+                scores += currentPosition.y/50;
                 enemyCount>0 ? enemyCount--:NULL;
             }
         }
